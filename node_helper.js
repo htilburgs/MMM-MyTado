@@ -39,7 +39,7 @@ module.exports = NodeHelper.create({
             console.log(`Tado home gevonden: ${homes[0].name} (ID: ${this.homeId})`);
 
             // WebSocket server starten
-            const port = this.config.websocketPort || 8081;
+            const port = this.config.websocketPort || 8090;
             this.wss = new WebSocket.Server({ port }, () => {
                 console.log(`MMM-MyTado WebSocket gestart op poort ${port}`);
             });
