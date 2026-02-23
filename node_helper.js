@@ -1,14 +1,18 @@
 const NodeHelper = require("node_helper");
-const { Tado } = require("node-tado-client"); // v1.1.1
-require("dotenv").config();
+const { Tado } = require("node-tado-client");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = NodeHelper.create({
 
     start() {
         console.log("MMM-MyTado node_helper gestart...");
-        this.tado = null;
+        this.tado = new Tado();
         this.homeId = null;
         this.previousPayload = null;
+
+        // Bestand om refresh token op te slaan
+        this.tokenFile = path.join(__dirname, "tado_refresh_token.json");
     },
 
     async socketNotificationReceived(notification, payload) {
@@ -20,35 +24,46 @@ module.exports = NodeHelper.create({
     },
 
     async initialize() {
-        console.log("initialize() gestart...");
         try {
-            const email = process.env.TADO_EMAIL || this.config.email;
-            const password = process.env.TADO_PASSWORD || this.config.password;
+            console.log("Initialize gestart...");
 
-            if (!email || !password) {
-                console.error("Email of wachtwoord ontbreekt. Controleer .env of config.js");
-                return;
+            let refreshToken = null;
+            // Lees refresh token als die al eerder opgeslagen is
+            if (fs.existsSync(this.tokenFile)) {
+                const content = fs.readFileSync(this.tokenFile, "utf-8");
+                const json = JSON.parse(content);
+                refreshToken = json.refreshToken;
+                console.log("Refresh token gevonden.");
             }
 
-            console.log("Probeer Tado client aan te maken met:", email);
+            // OAuth2 device authorization flow
+            const [verify, futureToken] = await this.tado.authenticate(refreshToken);
 
-            // ✅ v1.1.1: constructor neemt email + password, geen login()
-            this.tado = new Tado({ email, password });
-            console.log("Tado client aangemaakt.");
-
-            const homes = await this.tado.getHomes();
-            if (!homes.length) {
-                console.error("Geen Tado homes gevonden!");
-                return;
+            if (verify) {
+                console.log("💻 Open deze URL in je browser om Tado te autoriseren:");
+                console.log(verify.verification_uri_complete);
             }
 
-            this.homeId = homes[0].id;
-            console.log(`Tado home gevonden: ${homes[0].name} (ID: ${this.homeId})`);
+            const token = await futureToken; // wacht tot user autoriseert
+            fs.writeFileSync(this.tokenFile, JSON.stringify(token, null, 2));
+            console.log("Refresh token opgeslagen.");
 
-            // Eerste update direct uitvoeren
+            // Nu kan de client gebruikt worden
+            const me = await this.tado.getMe();
+            console.log(`Gebruiker: ${me.email}`);
+
+            // Pak de eerste home
+            if (!me.homes || me.homes.length === 0) {
+                console.error("Geen homes gevonden in Tado account!");
+                return;
+            }
+            this.homeId = me.homes[0].id;
+            console.log(`Home gevonden: ${me.homes[0].name} (ID: ${this.homeId})`);
+
+            // Eerste update
             await this.checkForUpdates();
 
-            // Polling voor vervoldupdates
+            // Polling
             const interval = this.config.updateInterval || 15000;
             console.log(`Polling elke ${interval / 1000} seconden`);
             setInterval(() => this.checkForUpdates(), interval);
@@ -66,15 +81,14 @@ module.exports = NodeHelper.create({
             const state = await this.tado.getHomeState(this.homeId);
 
             const output = [];
-
             for (const zone of zones) {
                 const st = await this.tado.getState(this.homeId, zone.id);
 
                 output.push({
                     name: zone.name,
-                    currentTemp: st.sensorDataPoints.insideTemperature?.celsius ?? null,
+                    currentTemp: st.sensorDataPoints?.insideTemperature?.celsius ?? null,
                     targetTemp: st.setting?.temperature?.celsius ?? null,
-                    heating: (st.activityDataPoints.heatingPower?.percentage ?? 0) > 0,
+                    heating: (st.activityDataPoints?.heatingPower?.percentage ?? 0) > 0,
                     openWindow: st.openWindowDetected?.length > 0
                 });
             }
@@ -84,7 +98,6 @@ module.exports = NodeHelper.create({
                 presence: state.presence
             };
 
-            // Alleen pushen bij verandering
             if (JSON.stringify(payload) !== JSON.stringify(this.previousPayload)) {
                 this.previousPayload = payload;
                 this.sendSocketNotification("TADO_UPDATE", payload);
