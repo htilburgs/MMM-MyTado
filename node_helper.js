@@ -30,12 +30,11 @@ module.exports = NodeHelper.create({
                 return;
             }
 
-            console.log("Probeer in te loggen bij Tado met:", email);
+            console.log("Probeer Tado client aan te maken met:", email);
 
-            // v1.1.1: class instance + login()
-            this.tado = new Tado();
-            await this.tado.login(email, password);
-            console.log("Login succesvol!");
+            // ✅ v1.1.1: constructor neemt email + password, geen login()
+            this.tado = new Tado({ email, password });
+            console.log("Tado client aangemaakt.");
 
             const homes = await this.tado.getHomes();
             if (!homes.length) {
