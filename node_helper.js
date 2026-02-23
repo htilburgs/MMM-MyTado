@@ -13,44 +13,48 @@ module.exports = NodeHelper.create({
 
     async socketNotificationReceived(notification, payload) {
         if (notification === "TADO_INIT") {
+            console.log("TADO_INIT ontvangen van frontend!");
             this.config = payload;
             await this.initialize();
         }
     },
 
     async initialize() {
+        console.log("initialize() gestart...");
         try {
-            // Login bij Tado
             this.tado = new Tado();
+
             const email = process.env.TADO_EMAIL || this.config.email;
             const password = process.env.TADO_PASSWORD || this.config.password;
 
             if (!email || !password) {
-                console.error("Tado email of password niet gevonden. Controleer je .env bestand of config.js");
+                console.error("Email of wachtwoord ontbreekt. Controleer .env of config.js");
                 return;
             }
+            console.log("Probeer in te loggen bij Tado met:", email);
 
-            console.log("Inloggen bij Tado...");
             await this.tado.login(email, password);
             console.log("Login succesvol!");
 
-            // Homes ophalen
             const homes = await this.tado.getHomes();
             if (!homes.length) {
                 console.error("Geen Tado homes gevonden!");
                 return;
             }
+
             this.homeId = homes[0].id;
             console.log(`Tado home gevonden: ${homes[0].name} (ID: ${this.homeId})`);
 
-            // Eerste update direct uitvoeren
+            // Eerste update direct
             await this.checkForUpdates();
 
-            // Polling elke 15 seconden
-            setInterval(() => this.checkForUpdates(), this.config.updateInterval || 15000);
+            // Polling voor updates
+            const interval = this.config.updateInterval || 15000;
+            console.log(`Polling elke ${interval / 1000} seconden`);
+            setInterval(() => this.checkForUpdates(), interval);
 
         } catch (err) {
-            console.error("Fout bij initialisatie:", err);
+            console.error("Fout bij initialize():", err);
         }
     },
 
@@ -80,15 +84,17 @@ module.exports = NodeHelper.create({
                 presence: state.presence
             };
 
-            // Alleen pushen als payload veranderd
+            // Alleen pushen bij verandering
             if (JSON.stringify(payload) !== JSON.stringify(this.previousPayload)) {
                 this.previousPayload = payload;
                 this.sendSocketNotification("TADO_UPDATE", payload);
                 console.log("Data gepushed naar frontend:", payload);
+            } else {
+                console.log("Geen verandering in data, push overgeslagen");
             }
 
         } catch (err) {
-            console.error("Fout bij realtime update:", err);
+            console.error("Fout bij checkForUpdates():", err);
         }
     }
 
