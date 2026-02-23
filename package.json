@@ -3,7 +3,6 @@
   "version": "3.0.0",
   "description": "Advanced Tado module for MagicMirror",
   "dependencies": {
-    "node-tado-client": "^1.1.1",
     "dotenv": "^16.4.0",
     "ws": "^8.16.0"
   }
