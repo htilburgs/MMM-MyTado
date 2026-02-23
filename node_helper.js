@@ -5,6 +5,14 @@ require("dotenv").config();
 
 module.exports = NodeHelper.create({
 
+    start() {
+        console.log("MMM-MyTado node_helper gestart...");
+        this.tado = null;
+        this.homeId = null;
+        this.previousPayload = null;
+        this.wss = null;
+    },
+
     async socketNotificationReceived(notification, payload) {
         if (notification === "TADO_INIT") {
             this.config = payload;
@@ -14,31 +22,47 @@ module.exports = NodeHelper.create({
 
     async initialize() {
         try {
+            // Login bij Tado
             this.tado = new Tado();
-            await this.tado.login(
-                process.env.TADO_EMAIL,
-                process.env.TADO_PASSWORD
-            );
+            const email = process.env.TADO_EMAIL || this.config.email;
+            const password = process.env.TADO_PASSWORD || this.config.password;
 
+            await this.tado.login(email, password);
+
+            // Eerste home ophalen
             const homes = await this.tado.getHomes();
+            if (!homes.length) {
+                console.error("Geen Tado homes gevonden!");
+                return;
+            }
             this.homeId = homes[0].id;
+            console.log(`Tado home gevonden: ${homes[0].name} (ID: ${this.homeId})`);
 
-            // Start WebSocket server
-            this.wss = new WebSocket.Server({ port: 8081 });
-            console.log("MMM-MyTado WebSocket gestart op poort 8081");
+            // WebSocket server starten
+            const port = this.config.websocketPort || 8081;
+            this.wss = new WebSocket.Server({ port }, () => {
+                console.log(`MMM-MyTado WebSocket gestart op poort ${port}`);
+            });
 
-            this.previousPayload = null;
+            // Log connecties
+            this.wss.on("connection", ws => {
+                console.log("Nieuwe WebSocket verbinding!");
+            });
 
-            // Polling blijft op achtergrond maar stuurt alleen bij wijziging
+            // Eerste update meteen uitvoeren
+            await this.checkForUpdates();
+
+            // Polling elke 15 seconden voor realtime-gevoel
             setInterval(() => this.checkForUpdates(), 15000);
 
         } catch (err) {
-            console.error("WebSocket init fout:", err);
+            console.error("Fout bij initialisatie:", err);
         }
     },
 
     async checkForUpdates() {
         try {
+            // Zones en home state ophalen
             const zones = await this.tado.getZones(this.homeId);
             const state = await this.tado.getHomeState(this.homeId);
 
@@ -49,7 +73,7 @@ module.exports = NodeHelper.create({
 
                 output.push({
                     name: zone.name,
-                    currentTemp: st.sensorDataPoints.insideTemperature?.celsius,
+                    currentTemp: st.sensorDataPoints.insideTemperature?.celsius ?? null,
                     targetTemp: st.setting?.temperature?.celsius ?? null,
                     heating: (st.activityDataPoints.heatingPower?.percentage ?? 0) > 0,
                     openWindow: st.openWindowDetected?.length > 0
@@ -61,17 +85,19 @@ module.exports = NodeHelper.create({
                 presence: state.presence
             };
 
+            // Alleen pushen als er verandering is
             if (JSON.stringify(payload) !== JSON.stringify(this.previousPayload)) {
                 this.previousPayload = payload;
                 this.broadcast(payload);
             }
 
         } catch (err) {
-            console.error("Realtime update fout:", err);
+            console.error("Fout bij realtime update:", err);
         }
     },
 
     broadcast(data) {
+        if (!this.wss) return;
         this.wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify(data));
