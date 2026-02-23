@@ -1,5 +1,5 @@
 const NodeHelper = require("node_helper");
-const { Tado } = require("node-tado-client");
+const { Tado } = require("node-tado-client"); // ✅ correct import
 require("dotenv").config();
 
 module.exports = NodeHelper.create({
@@ -45,10 +45,10 @@ module.exports = NodeHelper.create({
             this.homeId = homes[0].id;
             console.log(`Tado home gevonden: ${homes[0].name} (ID: ${this.homeId})`);
 
-            // Eerste update direct
+            // Eerste update direct uitvoeren
             await this.checkForUpdates();
 
-            // Polling voor updates
+            // Polling voor vervoldupdates
             const interval = this.config.updateInterval || 15000;
             console.log(`Polling elke ${interval / 1000} seconden`);
             setInterval(() => this.checkForUpdates(), interval);
