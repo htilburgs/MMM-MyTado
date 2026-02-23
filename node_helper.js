@@ -1,5 +1,5 @@
 const NodeHelper = require("node_helper");
-const { Tado } = require("node-tado-client"); // v6+ async factory
+const { Tado } = require("node-tado-client"); // v1.1.1
 require("dotenv").config();
 
 module.exports = NodeHelper.create({
@@ -32,8 +32,9 @@ module.exports = NodeHelper.create({
 
             console.log("Probeer in te loggen bij Tado met:", email);
 
-            // ✅ v6+: async factory functie, login automatisch
-            this.tado = await Tado({ email, password });
+            // v1.1.1: class instance + login()
+            this.tado = new Tado();
+            await this.tado.login(email, password);
             console.log("Login succesvol!");
 
             const homes = await this.tado.getHomes();
