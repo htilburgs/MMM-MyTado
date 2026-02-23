@@ -1,69 +1,58 @@
 Module.register("MMM-MyTado", {
 
     defaults: {
-        updateInterval: 5 * 60 * 1000,
-        homes: [],          // [] = eerste home
-        zones: [],          // [] = alle zones
-        showAway: true,
-        showOpenWindow: true,
-        colored: true
+        websocketPort: 8081
     },
 
     start() {
-        this.dataLoaded = false;
-        this.zonesData = [];
-        this.homeState = null;
-
-        this.sendSocketNotification("TADO_INIT", this.config);
+        this.zones = [];
+        this.presence = null;
+        this.connectWebSocket();
     },
 
-    socketNotificationReceived(notification, payload) {
-        if (notification === "TADO_UPDATE") {
-            this.zonesData = payload.zones;
-            this.homeState = payload.homeState;
-            this.dataLoaded = true;
-            this.updateDom(500);
-        }
+    connectWebSocket() {
+        const ws = new WebSocket(`ws://localhost:${this.config.websocketPort}`);
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.zones = data.zones;
+            this.presence = data.presence;
+            this.updateDom(300);
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket herverbinden...");
+            setTimeout(() => this.connectWebSocket(), 5000);
+        };
     },
 
     getDom() {
         const wrapper = document.createElement("div");
 
-        if (!this.dataLoaded) {
-            wrapper.innerHTML = "Tado laden...";
+        if (!this.zones.length) {
+            wrapper.innerHTML = "Wachten op realtime data...";
             return wrapper;
         }
 
-        // Home status
-        if (this.config.showAway && this.homeState) {
-            const homeDiv = document.createElement("div");
-            homeDiv.className = "small bright";
-            homeDiv.innerHTML =
-                this.homeState === "HOME"
-                    ? "🏠 Thuis"
-                    : "🚗 Afwezig";
-            wrapper.appendChild(homeDiv);
-        }
+        const home = document.createElement("div");
+        home.className = "bright small";
+        home.innerHTML =
+            this.presence === "HOME" ? "🏠 Thuis" : "🚗 Afwezig";
+        wrapper.appendChild(home);
 
-        this.zonesData.forEach(zone => {
+        this.zones.forEach(zone => {
             const div = document.createElement("div");
             div.className = "tado-zone";
 
-            if (this.config.colored && zone.heating) {
-                div.classList.add("heating");
-            }
-
-            const openWindow =
-                this.config.showOpenWindow && zone.openWindow
-                    ? `<span class="open-window">🪟 Open raam</span><br/>`
-                    : "";
+            if (zone.heating) div.classList.add("heating");
 
             div.innerHTML = `
-                <div class="zone-name">${zone.name}</div>
-                ${openWindow}
-                🌡 ${zone.currentTemp}°C<br/>
+                <b>${zone.name}</b><br/>
+                🌡 ${zone.currentTemp?.toFixed(1)}°C<br/>
                 🎯 ${zone.targetTemp ?? "Uit"}<br/>
-                <span class="heating-icon">${zone.heating ? "🔥" : "❄️"}</span>
+                ${zone.heating ? "🔥 Verwarmen" : "❄️ Idle"}
+                ${zone.openWindow ? "<br/>🪟 Open raam" : ""}
+                <hr/>
             `;
 
             wrapper.appendChild(div);
