@@ -1,7 +1,7 @@
 Module.register("MMM-MyTado", {
 
     defaults: {
-        updateInterval: 15000, // wordt gebruikt door node_helper
+        updateInterval: 15000,
         showAway: true,
         showOpenWindow: true,
         colored: true
@@ -10,10 +10,15 @@ Module.register("MMM-MyTado", {
     start() {
         this.zones = [];
         this.presence = null;
+        console.log("MMM-MyTado frontend gestart…");
+
+        // Init node_helper
+        this.sendSocketNotification("TADO_INIT", this.config);
     },
 
     socketNotificationReceived(notification, payload) {
         if (notification === "TADO_UPDATE") {
+            console.log("Frontend ontvangt data:", payload);
             this.zones = payload.zones;
             this.presence = payload.presence;
             this.updateDom(300);
