@@ -1,5 +1,5 @@
 const NodeHelper = require("node_helper");
-const { Tado } = require("node-tado-client"); // ✅ correct import
+const { Tado } = require("node-tado-client"); // ✅ nieuwste versie
 require("dotenv").config();
 
 module.exports = NodeHelper.create({
@@ -22,8 +22,6 @@ module.exports = NodeHelper.create({
     async initialize() {
         console.log("initialize() gestart...");
         try {
-            this.tado = new Tado();
-
             const email = process.env.TADO_EMAIL || this.config.email;
             const password = process.env.TADO_PASSWORD || this.config.password;
 
@@ -31,9 +29,11 @@ module.exports = NodeHelper.create({
                 console.error("Email of wachtwoord ontbreekt. Controleer .env of config.js");
                 return;
             }
+
             console.log("Probeer in te loggen bij Tado met:", email);
 
-            await this.tado.login(email, password);
+            // ✅ Nieuw: Tado client maakt login automatisch
+            this.tado = await Tado({ email, password });
             console.log("Login succesvol!");
 
             const homes = await this.tado.getHomes();
