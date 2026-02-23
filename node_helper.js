@@ -1,14 +1,10 @@
 const NodeHelper = require("node_helper");
 const Tado = require("node-tado-client");
+require("dotenv").config();
 
 module.exports = NodeHelper.create({
 
-    start: function () {
-        this.tado = null;
-        this.config = null;
-    },
-
-    socketNotificationReceived: async function (notification, payload) {
+    async socketNotificationReceived(notification, payload) {
         if (notification === "TADO_INIT") {
             this.config = payload;
             await this.initialize();
@@ -19,45 +15,71 @@ module.exports = NodeHelper.create({
         try {
             this.tado = new Tado();
 
-            await this.tado.login(this.config.email, this.config.password);
+            const email = process.env.TADO_EMAIL || this.config.email;
+            const password = process.env.TADO_PASSWORD || this.config.password;
 
-            const me = await this.tado.getMe();
+            await this.tado.login(email, password);
+
             const homes = await this.tado.getHomes();
 
-            const homeId = homes[0].id;
+            this.homeIds =
+                this.config.homes.length > 0
+                    ? this.config.homes
+                    : [homes[0].id];
 
-            this.updateData(homeId);
+            await this.updateLoop();
 
-            setInterval(() => {
-                this.updateData(homeId);
-            }, this.config.updateInterval);
+            setInterval(
+                () => this.updateLoop(),
+                this.config.updateInterval
+            );
 
-        } catch (error) {
-            console.error("Tado login fout:", error);
+        } catch (err) {
+            console.error("MMM-MyTado init fout:", err);
         }
     },
 
-    async updateData(homeId) {
+    async updateLoop() {
         try {
-            const zones = await this.tado.getZones(homeId);
+            const zonesOut = [];
+            let homePresence = null;
 
-            const zoneData = [];
+            for (const homeId of this.homeIds) {
+                const state = await this.tado.getHomeState(homeId);
+                homePresence = state.presence;
 
-            for (const zone of zones) {
-                const state = await this.tado.getState(homeId, zone.id);
+                const zones = await this.tado.getZones(homeId);
 
-                zoneData.push({
-                    name: zone.name,
-                    currentTemp: state.sensorDataPoints.insideTemperature?.celsius?.toFixed(1),
-                    targetTemp: state.setting?.temperature?.celsius ?? null,
-                    heating: state.activityDataPoints.heatingPower?.percentage > 0
-                });
+                for (const zone of zones) {
+
+                    if (
+                        this.config.zones.length &&
+                        !this.config.zones.includes(zone.name)
+                    ) continue;
+
+                    const st = await this.tado.getState(homeId, zone.id);
+
+                    zonesOut.push({
+                        name: zone.name,
+                        currentTemp:
+                            st.sensorDataPoints.insideTemperature?.celsius?.toFixed(1),
+                        targetTemp:
+                            st.setting?.temperature?.celsius ?? null,
+                        heating:
+                            (st.activityDataPoints.heatingPower?.percentage ?? 0) > 0,
+                        openWindow:
+                            st.openWindowDetected?.length > 0
+                    });
+                }
             }
 
-            this.sendSocketNotification("TADO_DATA", zoneData);
+            this.sendSocketNotification("TADO_UPDATE", {
+                zones: zonesOut,
+                homeState: homePresence
+            });
 
-        } catch (error) {
-            console.error("Tado update fout:", error);
+        } catch (err) {
+            console.error("MMM-MyTado update fout:", err);
         }
     }
 
