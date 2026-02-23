@@ -1,5 +1,5 @@
 const NodeHelper = require("node_helper");
-const Tado = require("node-tado-client");
+const { Tado } = require("node-tado-client");
 require("dotenv").config();
 
 module.exports = NodeHelper.create({
