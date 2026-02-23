@@ -20,12 +20,21 @@ module.exports = NodeHelper.create({
 
     async initialize() {
         try {
+            // Login bij Tado
             this.tado = new Tado();
             const email = process.env.TADO_EMAIL || this.config.email;
             const password = process.env.TADO_PASSWORD || this.config.password;
 
-            await this.tado.login(email, password);
+            if (!email || !password) {
+                console.error("Tado email of password niet gevonden. Controleer je .env bestand of config.js");
+                return;
+            }
 
+            console.log("Inloggen bij Tado...");
+            await this.tado.login(email, password);
+            console.log("Login succesvol!");
+
+            // Homes ophalen
             const homes = await this.tado.getHomes();
             if (!homes.length) {
                 console.error("Geen Tado homes gevonden!");
@@ -34,11 +43,11 @@ module.exports = NodeHelper.create({
             this.homeId = homes[0].id;
             console.log(`Tado home gevonden: ${homes[0].name} (ID: ${this.homeId})`);
 
-            // Eerste update meteen
+            // Eerste update direct uitvoeren
             await this.checkForUpdates();
 
-            // Polling elke 15s voor realtime updates
-            setInterval(() => this.checkForUpdates(), 15000);
+            // Polling elke 15 seconden
+            setInterval(() => this.checkForUpdates(), this.config.updateInterval || 15000);
 
         } catch (err) {
             console.error("Fout bij initialisatie:", err);
@@ -47,6 +56,8 @@ module.exports = NodeHelper.create({
 
     async checkForUpdates() {
         try {
+            console.log("checkForUpdates gestart...");
+
             const zones = await this.tado.getZones(this.homeId);
             const state = await this.tado.getHomeState(this.homeId);
 
@@ -54,6 +65,7 @@ module.exports = NodeHelper.create({
 
             for (const zone of zones) {
                 const st = await this.tado.getState(this.homeId, zone.id);
+
                 output.push({
                     name: zone.name,
                     currentTemp: st.sensorDataPoints.insideTemperature?.celsius ?? null,
@@ -68,14 +80,15 @@ module.exports = NodeHelper.create({
                 presence: state.presence
             };
 
-            // Alleen pushen als er verandering is
+            // Alleen pushen als payload veranderd
             if (JSON.stringify(payload) !== JSON.stringify(this.previousPayload)) {
                 this.previousPayload = payload;
                 this.sendSocketNotification("TADO_UPDATE", payload);
+                console.log("Data gepushed naar frontend:", payload);
             }
 
         } catch (err) {
-            console.error("Fout bij update:", err);
+            console.error("Fout bij realtime update:", err);
         }
     }
 
