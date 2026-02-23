@@ -1,0 +1,9 @@
+{
+  "name": "mmm-mytado",
+  "version": "1.0.0",
+  "description": "MagicMirror module for Tado thermostat",
+  "main": "MMM-MyTado.js",
+  "dependencies": {
+    "node-tado-client": "^2.4.0"
+  }
+}
