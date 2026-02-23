@@ -1,5 +1,12 @@
 Module.register("MMM-MyTado", {
 
+    defaults: {
+        updateInterval: 15000, // wordt gebruikt door node_helper
+        showAway: true,
+        showOpenWindow: true,
+        colored: true
+    },
+
     start() {
         this.zones = [];
         this.presence = null;
@@ -21,15 +28,16 @@ Module.register("MMM-MyTado", {
             return wrapper;
         }
 
-        const home = document.createElement("div");
-        home.className = "bright small";
-        home.innerHTML = this.presence === "HOME" ? "🏠 Thuis" : "🚗 Afwezig";
-        wrapper.appendChild(home);
+        const homeDiv = document.createElement("div");
+        homeDiv.className = "bright small";
+        homeDiv.innerHTML = this.presence === "HOME" ? "🏠 Thuis" : "🚗 Afwezig";
+        wrapper.appendChild(homeDiv);
 
         this.zones.forEach(zone => {
             const div = document.createElement("div");
             div.className = "tado-zone";
-            if (zone.heating) div.classList.add("heating");
+
+            if (this.defaults.colored && zone.heating) div.classList.add("heating");
 
             div.innerHTML = `
                 <b>${zone.name}</b><br/>
