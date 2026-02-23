@@ -1,5 +1,6 @@
 const NodeHelper = require("node_helper");
 const Tado = require("node-tado-client");
+const WebSocket = require("ws");
 require("dotenv").config();
 
 module.exports = NodeHelper.create({
@@ -14,73 +15,68 @@ module.exports = NodeHelper.create({
     async initialize() {
         try {
             this.tado = new Tado();
-
-            const email = process.env.TADO_EMAIL || this.config.email;
-            const password = process.env.TADO_PASSWORD || this.config.password;
-
-            await this.tado.login(email, password);
-
-            const homes = await this.tado.getHomes();
-
-            this.homeIds =
-                this.config.homes.length > 0
-                    ? this.config.homes
-                    : [homes[0].id];
-
-            await this.updateLoop();
-
-            setInterval(
-                () => this.updateLoop(),
-                this.config.updateInterval
+            await this.tado.login(
+                process.env.TADO_EMAIL,
+                process.env.TADO_PASSWORD
             );
 
+            const homes = await this.tado.getHomes();
+            this.homeId = homes[0].id;
+
+            // Start WebSocket server
+            this.wss = new WebSocket.Server({ port: 8081 });
+            console.log("MMM-MyTado WebSocket gestart op poort 8081");
+
+            this.previousPayload = null;
+
+            // Polling blijft op achtergrond maar stuurt alleen bij wijziging
+            setInterval(() => this.checkForUpdates(), 15000);
+
         } catch (err) {
-            console.error("MMM-MyTado init fout:", err);
+            console.error("WebSocket init fout:", err);
         }
     },
 
-    async updateLoop() {
+    async checkForUpdates() {
         try {
-            const zonesOut = [];
-            let homePresence = null;
+            const zones = await this.tado.getZones(this.homeId);
+            const state = await this.tado.getHomeState(this.homeId);
 
-            for (const homeId of this.homeIds) {
-                const state = await this.tado.getHomeState(homeId);
-                homePresence = state.presence;
+            const output = [];
 
-                const zones = await this.tado.getZones(homeId);
+            for (const zone of zones) {
+                const st = await this.tado.getState(this.homeId, zone.id);
 
-                for (const zone of zones) {
-
-                    if (
-                        this.config.zones.length &&
-                        !this.config.zones.includes(zone.name)
-                    ) continue;
-
-                    const st = await this.tado.getState(homeId, zone.id);
-
-                    zonesOut.push({
-                        name: zone.name,
-                        currentTemp:
-                            st.sensorDataPoints.insideTemperature?.celsius?.toFixed(1),
-                        targetTemp:
-                            st.setting?.temperature?.celsius ?? null,
-                        heating:
-                            (st.activityDataPoints.heatingPower?.percentage ?? 0) > 0,
-                        openWindow:
-                            st.openWindowDetected?.length > 0
-                    });
-                }
+                output.push({
+                    name: zone.name,
+                    currentTemp: st.sensorDataPoints.insideTemperature?.celsius,
+                    targetTemp: st.setting?.temperature?.celsius ?? null,
+                    heating: (st.activityDataPoints.heatingPower?.percentage ?? 0) > 0,
+                    openWindow: st.openWindowDetected?.length > 0
+                });
             }
 
-            this.sendSocketNotification("TADO_UPDATE", {
-                zones: zonesOut,
-                homeState: homePresence
-            });
+            const payload = {
+                zones: output,
+                presence: state.presence
+            };
+
+            if (JSON.stringify(payload) !== JSON.stringify(this.previousPayload)) {
+                this.previousPayload = payload;
+                this.broadcast(payload);
+            }
 
         } catch (err) {
-            console.error("MMM-MyTado update fout:", err);
+            console.error("Realtime update fout:", err);
         }
+    },
+
+    broadcast(data) {
+        this.wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(data));
+            }
+        });
     }
 
 });
