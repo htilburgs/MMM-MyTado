@@ -59,3 +59,4 @@ Module.register("MMM-MyTado", {
     }
 
 });
+
