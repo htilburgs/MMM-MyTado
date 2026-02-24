@@ -1,9 +1,10 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 1800000, // 30 min
+        updateInterval: 300000, // 5 min
         showTemperature: true,
         showHeating: true,
-        showOpenWindow: true
+        showOpenWindow: true,
+        showZones: [] // lege array = alle zones, anders array met zonenamen
     },
 
     start: function () {
@@ -40,8 +41,12 @@ Module.register("MMM-MyTado", {
             homeTitle.innerHTML = home.name;
             homeCol.appendChild(homeTitle);
 
-            // Zones
-            home.zones.forEach((zone) => {
+            // Zones filteren op showZones
+            const zonesToShow = this.config.showZones.length > 0
+                ? home.zones.filter(z => this.config.showZones.includes(z.name))
+                : home.zones;
+
+            zonesToShow.forEach((zone) => {
                 const zoneDiv = document.createElement("div");
                 zoneDiv.className = "tado-zone";
                 let html = `<strong>${zone.name}</strong>: `;
