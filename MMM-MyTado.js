@@ -4,7 +4,8 @@ Module.register("MMM-MyTado", {
         showTemperature: true,
         showHeating: true,
         showOpenWindow: true,
-        showZones: [] // lege array = alle zones, anders array met zonenamen
+        showZones: [], // lege array = alle zones
+        showHomeName: true // nieuwe parameter: toon home naam
     },
 
     start: function () {
@@ -35,11 +36,13 @@ Module.register("MMM-MyTado", {
             const homeCol = document.createElement("div");
             homeCol.className = "tado-column";
 
-            // Home title
-            const homeTitle = document.createElement("div");
-            homeTitle.className = "tado-home";
-            homeTitle.innerHTML = home.name;
-            homeCol.appendChild(homeTitle);
+            // Toon home naam als showHomeName true is
+            if (this.config.showHomeName) {
+                const homeTitle = document.createElement("div");
+                homeTitle.className = "tado-home";
+                homeTitle.innerHTML = home.name;
+                homeCol.appendChild(homeTitle);
+            }
 
             // Zones filteren op showZones
             const zonesToShow = this.config.showZones.length > 0
