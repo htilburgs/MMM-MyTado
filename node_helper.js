@@ -77,10 +77,8 @@ module.exports = NodeHelper.create({
     // =============================
     parseRateLimit: function (response) {
         if (!response?.headers) return;
-
         const h = {};
         Object.keys(response.headers).forEach(k => h[k.toLowerCase()] = response.headers[k]);
-
         this.apiRateLimit.limit = h["x-ratelimit-limit"] ?? null;
         this.apiRateLimit.remaining = h["x-ratelimit-remaining"] ?? null;
         this.apiRateLimit.reset = h["x-ratelimit-reset"] ?? null;
@@ -98,10 +96,29 @@ module.exports = NodeHelper.create({
         try {
             const delay = ms => new Promise(r => setTimeout(r, ms));
 
-            // --- GET ME + rate-limit ---
-            const meResponse = await this.tadoClient.getMe({ raw: true });
-            this.parseRateLimit(meResponse);
-            const me = meResponse.data;
+            // --- GET ME with safe fallback ---
+            let meResponse;
+            try {
+                // probeer raw headers
+                meResponse = await this.tadoClient.getMe({ raw: true });
+            } catch (err) {
+                console.warn("MMM-MyTado: getMe({raw:true}) failed, fallback to normal getMe");
+                meResponse = await this.tadoClient.getMe();
+            }
+
+            let me;
+            if (meResponse?.data) {
+                me = meResponse.data;
+                this.parseRateLimit(meResponse);
+            } else {
+                me = meResponse;
+            }
+
+            if (!me?.homes) {
+                console.error("MMM-MyTado: No homes found in response");
+                this.fetching = false;
+                return;
+            }
 
             const homesOut = [];
 
@@ -114,10 +131,8 @@ module.exports = NodeHelper.create({
                     : zones;
 
                 const maxConcurrent = 5;
-
                 for (let i = 0; i < zonesToFetch.length; i += maxConcurrent) {
                     const batch = zonesToFetch.slice(i, i + maxConcurrent);
-
                     const results = await Promise.all(batch.map(async zone => {
                         try {
                             const state = await this.tadoClient.getZoneState(home.id, zone.id);
@@ -127,7 +142,6 @@ module.exports = NodeHelper.create({
                             return null;
                         }
                     }));
-
                     homeInfo.zones.push(...results.filter(r => r !== null));
                     await delay(200);
                 }
