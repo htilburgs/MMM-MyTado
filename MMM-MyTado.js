@@ -1,7 +1,6 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 300000, // 5 min
-        showPresence: true,
+        updateInterval: 1800000, // 30 min
         showTemperature: true,
         showHeating: true,
         showOpenWindow: true
@@ -27,13 +26,6 @@ Module.register("MMM-MyTado", {
             return wrapper;
         }
 
-        // Presence
-        if (this.config.showPresence) {
-            const presence = document.createElement("div");
-            presence.innerHTML = `<strong>Presence:</strong> ${this.tadoData.tadoMe.presence || "Unknown"}`;
-            wrapper.appendChild(presence);
-        }
-
         // Homes & Zones
         this.tadoData.tadoHomes.forEach((home) => {
             const homeDiv = document.createElement("div");
@@ -46,17 +38,20 @@ Module.register("MMM-MyTado", {
                 zoneDiv.className = "tado-zone";
                 let html = `<strong>${zone.name}</strong>: `;
 
+                // Temperature
                 if (this.config.showTemperature) {
                     const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
                     const target = zone.state.setting?.temperature?.celsius ?? "-";
                     html += `🌡 ${current}°C / ${target}°C `;
                 }
 
+                // Heating
                 if (this.config.showHeating) {
                     const heating = (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
                     html += heating ? "🔥 " : "❄ ";
                 }
 
+                // Open window
                 if (this.config.showOpenWindow) {
                     const openWindow = Array.isArray(zone.state.openWindowDetected)
                         ? zone.state.openWindowDetected.length > 0
