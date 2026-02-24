@@ -17,7 +17,7 @@ Module.register("MMM-MyTado", {
 
     socketNotificationReceived: function (notification, payload) {
         if (notification === "NEW_DATA") {
-            this.tadoData = payload;
+            this.tadoData = payload.tadoHomes;
             this.apiRateLimit = payload.apiRateLimit || null;
             this.updateDom();
         }
@@ -35,7 +35,7 @@ Module.register("MMM-MyTado", {
         const columns = document.createElement("div");
         columns.className = "tado-columns";
 
-        this.tadoData.tadoHomes.forEach((home) => {
+        this.tadoData.forEach(home => {
             const homeCol = document.createElement("div");
             homeCol.className = "tado-column";
 
@@ -46,32 +46,22 @@ Module.register("MMM-MyTado", {
                 homeCol.appendChild(homeTitle);
             }
 
-            home.zones.forEach((zone) => {
+            home.zones.forEach(zone => {
                 const zoneDiv = document.createElement("div");
                 zoneDiv.className = "tado-zone";
 
                 let html = `<strong>${zone.name}</strong>: `;
-
                 if (this.config.showTemperature) {
-                    const current =
-                        zone.state.sensorDataPoints?.insideTemperature
-                            ?.celsius ?? "-";
-                    const target =
-                        zone.state.setting?.temperature?.celsius ?? "-";
+                    const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
+                    const target = zone.state.setting?.temperature?.celsius ?? "-";
                     html += `🌡 ${current}°C / ${target}°C `;
                 }
-
                 if (this.config.showHeating) {
-                    const heating =
-                        (zone.state.activityDataPoints?.heatingPower
-                            ?.percentage ?? 0) > 0;
+                    const heating = (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
                     html += heating ? "🔥 " : "❄ ";
                 }
-
                 if (this.config.showOpenWindow) {
-                    const openWindow = Array.isArray(
-                        zone.state.openWindowDetected
-                    )
+                    const openWindow = Array.isArray(zone.state.openWindowDetected)
                         ? zone.state.openWindowDetected.length > 0
                         : false;
                     if (openWindow) html += "🪟";
@@ -86,18 +76,32 @@ Module.register("MMM-MyTado", {
 
         wrapper.appendChild(columns);
 
-        // DEBUG INFO
+        // =====================
+        // DEBUG RATE-LIMIT
+        // =====================
         if (this.config.debug && this.apiRateLimit) {
             const dbg = document.createElement("div");
             dbg.className = "tado-debug";
 
+            let resetText = this.apiRateLimit.reset;
+            if (resetText && !isNaN(resetText)) {
+                const d = new Date(resetText * 1000);
+                resetText = d.toLocaleTimeString();
+            }
+
             dbg.innerHTML = `
                 <hr>
-                API remaining: ${
-                    this.apiRateLimit.remaining ?? "unknown"
-                }<br>
-                Reset: ${this.apiRateLimit.reset ?? "unknown"}
+                API limit: ${this.apiRateLimit.limit ?? "unknown"}<br>
+                Remaining: ${this.apiRateLimit.remaining ?? "unknown"}<br>
+                Reset: ${resetText ?? "unknown"}
             `;
+
+            // kleur waarschuwing
+            const remaining = Number(this.apiRateLimit.remaining);
+            if (!isNaN(remaining)) {
+                if (remaining < 10) dbg.style.color = "red";
+                else if (remaining < 25) dbg.style.color = "orange";
+            }
 
             wrapper.appendChild(dbg);
         }
