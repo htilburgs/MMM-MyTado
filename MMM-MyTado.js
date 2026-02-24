@@ -39,54 +39,36 @@ Module.register("MMM-MyTado", {
             homeTitle.innerHTML = home.name;
             homeCol.appendChild(homeTitle);
 
-            // Table-like structure for zones
-            const zoneTable = document.createElement("div");
-            zoneTable.className = "tado-zone-table";
-
             home.zones.forEach((zone) => {
-                const row = document.createElement("div");
-                row.className = "tado-zone-row";
-
-                // Room name
-                const roomDiv = document.createElement("div");
-                roomDiv.className = "tado-zone-room";
-                roomDiv.innerHTML = zone.name;
-                row.appendChild(roomDiv);
+                const zoneDiv = document.createElement("div");
+                zoneDiv.className = "tado-zone";
+                let html = `<strong>${zone.name}</strong>: `;
 
                 // Temperature
                 if (this.config.showTemperature) {
-                    const tempDiv = document.createElement("div");
-                    tempDiv.className = "tado-zone-temp";
                     const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
                     const target = zone.state.setting?.temperature?.celsius ?? "-";
-                    tempDiv.innerHTML = `${current}°C / ${target}°C`;
-                    row.appendChild(tempDiv);
+                    html += `🌡 ${current}°C / ${target}°C `;
                 }
 
                 // Heating
                 if (this.config.showHeating) {
-                    const heatingDiv = document.createElement("div");
-                    heatingDiv.className = "tado-zone-heating";
                     const heating = (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
-                    heatingDiv.innerHTML = heating ? "🔥" : "❄";
-                    row.appendChild(heatingDiv);
+                    html += heating ? "🔥 " : "❄ ";
                 }
 
                 // Open window
                 if (this.config.showOpenWindow) {
-                    const windowDiv = document.createElement("div");
-                    windowDiv.className = "tado-zone-window";
                     const openWindow = Array.isArray(zone.state.openWindowDetected)
                         ? zone.state.openWindowDetected.length > 0
                         : false;
-                    windowDiv.innerHTML = openWindow ? "🪟" : "";
-                    row.appendChild(windowDiv);
+                    if (openWindow) html += "🪟";
                 }
 
-                zoneTable.appendChild(row);
+                zoneDiv.innerHTML = html;
+                homeCol.appendChild(zoneDiv);
             });
 
-            homeCol.appendChild(zoneTable);
             columns.appendChild(homeCol);
         });
 
