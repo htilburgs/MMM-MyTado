@@ -7,13 +7,14 @@ MagicMirror Tado
 {
   module: "MMM-MyTado",
   position: "top_right",
+  header: "TADO Thermostaat",
+  disabled: false,
   config: {
-    updateInterval: 300000,
-    homes: [],              // of [123456]
+    updateInterval: 1800000   // 30 min,
     zones: ["Woonkamer", "Slaapkamer"],
-    showAway: true,
-    showOpenWindow: true,
-    colored: true
+    showTemperature: true,
+    showHeating: true,
+    showOpenWindow: true
   }
 },
 ```
