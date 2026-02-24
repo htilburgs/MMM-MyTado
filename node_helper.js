@@ -6,104 +6,144 @@ const path = require("path");
 module.exports = NodeHelper.create({
 
     start() {
-        console.log("MMM-MyTado node_helper gestart...");
+        console.log("MMM-MyTado node_helper gestart");
+
         this.tado = new Tado();
+        this.config = null;
         this.homeId = null;
         this.previousPayload = null;
+        this.updateTimer = null;
 
-        // Bestand om refresh token op te slaan
         this.tokenFile = path.join(__dirname, "tado_refresh_token.json");
     },
 
-    async socketNotificationReceived(notification, payload) {
+    socketNotificationReceived(notification, payload) {
         if (notification === "TADO_INIT") {
-            console.log("TADO_INIT ontvangen van frontend!");
+            console.log("TADO_INIT ontvangen");
             this.config = payload;
-            await this.initialize();
+            this.initialize();
         }
     },
 
+    // ================================
+    // 🔐 INITIALIZE + AUTH
+    // ================================
     async initialize() {
         try {
-            console.log("Initialize gestart...");
+            console.log("Initialize gestart");
 
             let refreshToken = null;
-            // Lees refresh token als die al eerder opgeslagen is
+
+            // bestaande token laden
             if (fs.existsSync(this.tokenFile)) {
-                const content = fs.readFileSync(this.tokenFile, "utf-8");
-                const json = JSON.parse(content);
-                refreshToken = json.refreshToken;
-                console.log("Refresh token gevonden.");
+                try {
+                    const json = JSON.parse(fs.readFileSync(this.tokenFile));
+                    refreshToken = json.refreshToken;
+                    console.log("Refresh token geladen");
+                } catch (e) {
+                    console.error("Token bestand corrupt, opnieuw authenticeren");
+                }
             }
 
-            // OAuth2 device authorization flow
+            // OAuth device flow
             const [verify, futureToken] = await this.tado.authenticate(refreshToken);
 
             if (verify) {
-                console.log("💻 Open deze URL in je browser om Tado te autoriseren:");
+                console.log("====================================");
+                console.log("👉 Autoriseer Tado via deze URL:");
                 console.log(verify.verification_uri_complete);
+                console.log("====================================");
             }
 
-            const token = await futureToken; // wacht tot user autoriseert
+            const token = await futureToken;
+
+            // token opslaan
             fs.writeFileSync(this.tokenFile, JSON.stringify(token, null, 2));
-            console.log("Refresh token opgeslagen.");
+            console.log("Refresh token opgeslagen");
 
-            // Nu kan de client gebruikt worden
+            // gebruiker ophalen
             const me = await this.tado.getMe();
-            console.log(`Gebruiker: ${me.email}`);
+            console.log(`Ingelogd als: ${me.email}`);
 
-            // Pak de eerste home
             if (!me.homes || me.homes.length === 0) {
-                console.error("Geen homes gevonden in Tado account!");
+                console.error("Geen homes gevonden!");
                 return;
             }
-            this.homeId = me.homes[0].id;
-            console.log(`Home gevonden: ${me.homes[0].name} (ID: ${this.homeId})`);
 
-            // Eerste update
+            this.homeId = me.homes[0].id;
+            console.log(`Home actief: ${me.homes[0].name} (${this.homeId})`);
+
+            // eerste update
             await this.checkForUpdates();
 
-            // Polling
+            // polling starten
             const interval = this.config.updateInterval || 15000;
-            console.log(`Polling elke ${interval / 1000} seconden`);
-            setInterval(() => this.checkForUpdates(), interval);
+            console.log(`Polling gestart: ${interval} ms`);
+
+            this.updateTimer = setInterval(
+                () => this.checkForUpdates(),
+                interval
+            );
 
         } catch (err) {
             console.error("Fout bij initialize():", err);
         }
     },
 
+    // ================================
+    // 🔄 DATA UPDATE
+    // ================================
     async checkForUpdates() {
+        if (!this.homeId) {
+            console.warn("checkForUpdates overgeslagen: geen homeId");
+            return;
+        }
+
         try {
-            console.log("checkForUpdates gestart...");
+            console.log("checkForUpdates gestart");
 
+            // zones ophalen
             const zones = await this.tado.getZones(this.homeId);
-            const state = await this.tado.getHomeState(this.homeId);
 
-            const output = [];
-            for (const zone of zones) {
-                const st = await this.tado.getState(this.homeId, zone.id);
+            // presence ophalen (correct voor v1.1.1)
+            const homeState = await this.tado.getState(this.homeId);
 
-                output.push({
-                    name: zone.name,
-                    currentTemp: st.sensorDataPoints?.insideTemperature?.celsius ?? null,
-                    targetTemp: st.setting?.temperature?.celsius ?? null,
-                    heating: (st.activityDataPoints?.heatingPower?.percentage ?? 0) > 0,
-                    openWindow: st.openWindowDetected?.length > 0
-                });
-            }
+            // 🔥 parallel zone states
+            const zoneStates = await Promise.all(
+                zones.map(async (zone) => {
+                    try {
+                        const st = await this.tado.getState(this.homeId, zone.id);
+
+                        return {
+                            name: zone.name,
+                            currentTemp: st.sensorDataPoints?.insideTemperature?.celsius ?? null,
+                            targetTemp: st.setting?.temperature?.celsius ?? null,
+                            heating: (st.activityDataPoints?.heatingPower?.percentage ?? 0) > 0,
+                            openWindow: Array.isArray(st.openWindowDetected)
+                                ? st.openWindowDetected.length > 0
+                                : false
+                        };
+
+                    } catch (zoneErr) {
+                        console.error(`Zone fout (${zone.name}):`, zoneErr);
+                        return null;
+                    }
+                })
+            );
 
             const payload = {
-                zones: output,
-                presence: state.presence
+                zones: zoneStates.filter(Boolean),
+                presence: homeState?.presence || "UNKNOWN",
+                timestamp: Date.now()
             };
 
+            // alleen pushen bij wijziging
             if (JSON.stringify(payload) !== JSON.stringify(this.previousPayload)) {
                 this.previousPayload = payload;
                 this.sendSocketNotification("TADO_UPDATE", payload);
-                console.log("Data gepushed naar frontend:", payload);
+                console.log("✅ Nieuwe data naar frontend gestuurd");
             } else {
-                console.log("Geen verandering in data, push overgeslagen");
+                console.log("ℹ️ Geen wijzigingen");
             }
 
         } catch (err) {
