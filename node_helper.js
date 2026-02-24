@@ -7,39 +7,40 @@ const TOKEN_FILE = path.join(__dirname, "tado_refresh_token.json");
 
 module.exports = NodeHelper.create({
     tadoClient: null,
-    tadoMe: {},
-    tadoHomes: [],
     refreshToken: null,
     authenticated: false,
     fetching: false,
     showZones: [],
+    apiRateLimit: {
+        remaining: null,
+        reset: null
+    },
 
     start: async function () {
+        console.log("MMM-MyTado: Node helper started");
+
         this.tadoClient = new Tado();
 
         // Load saved refresh token
         if (fs.existsSync(TOKEN_FILE)) {
             try {
-                const data = fs.readFileSync(TOKEN_FILE, "utf8");
-                const tokenData = JSON.parse(data);
-                if (tokenData && tokenData.refresh_token) {
-                    this.refreshToken = tokenData.refresh_token;
-                    console.log("MMM-Tado: Refresh token loaded.");
-                }
+                const data = JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
+                this.refreshToken = data.refresh_token || null;
+                console.log("MMM-MyTado: Refresh token loaded");
             } catch (err) {
-                console.error("MMM-Tado: Error loading refresh token", err);
+                console.error("MMM-MyTado: Failed to load token", err);
             }
         }
 
-        // Save new tokens automatically
+        // Auto-save tokens
         this.tadoClient.setTokenCallback((token) => {
-            if (token && token.refresh_token) {
+            if (token?.refresh_token) {
                 this.refreshToken = token.refresh_token;
                 try {
                     fs.writeFileSync(TOKEN_FILE, JSON.stringify(token), "utf8");
-                    console.log("MMM-Tado: Refresh token saved.");
+                    console.log("MMM-MyTado: Refresh token saved");
                 } catch (err) {
-                    console.error("MMM-Tado: Error saving refresh token", err);
+                    console.error("MMM-MyTado: Failed saving token", err);
                 }
             }
         });
@@ -47,80 +48,148 @@ module.exports = NodeHelper.create({
         await this.authenticate();
     },
 
+    // =============================
+    // AUTHENTICATION (self healing)
+    // =============================
     authenticate: async function () {
         try {
             const [verify, futureToken] =
                 await this.tadoClient.authenticate(this.refreshToken);
 
             if (verify) {
-                console.log("MMM-Tado: Device authentication required.");
-                console.log("Open deze URL om te autoriseren:");
+                console.log("MMM-MyTado: Device authorization required:");
                 console.log(verify.verification_uri_complete);
             }
 
             await futureToken;
             this.authenticated = true;
-            console.log("MMM-Tado: Successfully authenticated.");
+            console.log("MMM-MyTado: Authenticated");
         } catch (err) {
-            console.error("MMM-Tado: Authentication failed:", err);
+            this.authenticated = false;
+            console.error("MMM-MyTado: Authentication failed", err);
         }
     },
 
+    ensureAuth: async function () {
+        if (!this.authenticated) {
+            await this.authenticate();
+        }
+    },
+
+    // =============================
+    // DATA FETCH
+    // =============================
     getData: async function () {
-        if (!this.authenticated || this.fetching) return;
+        if (this.fetching) return;
+
+        await this.ensureAuth();
+        if (!this.authenticated) return;
 
         this.fetching = true;
+
         try {
-            const delay = ms => new Promise(r => setTimeout(r, ms));
+            const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-            this.tadoMe = await this.tadoClient.getMe();
-            this.tadoHomes = [];
+            // --- USER ---
+            const me = await this.tadoClient.getMe();
+            this.updateRateLimit(me);
 
-            for (const home of this.tadoMe.homes) {
-                const homeInfo = { id: home.id, name: home.name, zones: [] };
-                this.tadoHomes.push(homeInfo);
+            const homesOut = [];
+
+            for (const home of me.homes) {
+                const homeInfo = {
+                    id: home.id,
+                    name: home.name,
+                    zones: []
+                };
 
                 const zones = await this.tadoClient.getZones(home.id);
 
-                // Filter zones op showZones
-                const zonesToFetch = this.showZones.length > 0
-                    ? zones.filter(z => this.showZones.includes(z.name))
-                    : zones;
+                const zonesToFetch =
+                    this.showZones.length > 0
+                        ? zones.filter((z) =>
+                              this.showZones.includes(z.name)
+                          )
+                        : zones;
 
                 const maxConcurrent = 5;
-                const results = [];
+
                 for (let i = 0; i < zonesToFetch.length; i += maxConcurrent) {
                     const batch = zonesToFetch.slice(i, i + maxConcurrent);
-                    const batchResults = await Promise.all(
+
+                    const results = await Promise.all(
                         batch.map(async (zone) => {
                             try {
-                                const state = await this.tadoClient.getZoneState(home.id, zone.id);
-                                return { id: zone.id, name: zone.name, type: zone.type, state };
+                                const state =
+                                    await this.tadoClient.getZoneState(
+                                        home.id,
+                                        zone.id
+                                    );
+
+                                return {
+                                    id: zone.id,
+                                    name: zone.name,
+                                    type: zone.type,
+                                    state
+                                };
                             } catch (err) {
-                                console.error(`MMM-Tado: Failed fetching zone ${zone.name}`, err);
+                                console.error(
+                                    `MMM-MyTado: Zone fetch failed (${zone.name})`,
+                                    err.message
+                                );
                                 return null;
                             }
                         })
                     );
-                    results.push(...batchResults.filter(r => r !== null));
+
+                    homeInfo.zones.push(
+                        ...results.filter((r) => r !== null)
+                    );
+
                     await delay(200);
                 }
-                homeInfo.zones = results;
+
+                homesOut.push(homeInfo);
             }
 
             this.sendSocketNotification("NEW_DATA", {
-                tadoMe: this.tadoMe,
-                tadoHomes: this.tadoHomes
+                tadoHomes: homesOut,
+                apiRateLimit: this.apiRateLimit
             });
 
-            console.log("MMM-Tado: Data sent to frontend.");
+            console.log("MMM-MyTado: Data sent");
         } catch (err) {
-            console.error("MMM-Tado: Error in getData:", err);
+            // Auto re-auth on 401
+            if (err?.response?.status === 401) {
+                console.log("MMM-MyTado: Token expired — reauth");
+                this.authenticated = false;
+                await this.authenticate();
+            } else if (err?.response?.status === 429) {
+                console.warn("MMM-MyTado: Rate limited");
+            } else {
+                console.error("MMM-MyTado: getData error", err);
+            }
         } finally {
             this.fetching = false;
         }
     },
 
+    // =============================
+    // RATE LIMIT PARSER
+    // =============================
+    updateRateLimit: function (response) {
+        const headers = response?._headers;
+        if (!headers) return;
+
+        this.apiRateLimit.remaining =
+            headers["x-ratelimit-remaining"] ?? null;
+        this.apiRateLimit.reset =
+            headers["x-ratelimit-reset"] ?? null;
+    },
+
+    // =============================
+    // SOCKET
+    // =============================
     socketNotificationReceived: function (notification, payload) {
         if (notification === "CONFIG") {
             this.config = payload;
@@ -128,7 +197,10 @@ module.exports = NodeHelper.create({
 
             this.getData();
 
-            setInterval(() => this.getData(), this.config.updateInterval || 300000);
+            setInterval(
+                () => this.getData(),
+                this.config.updateInterval || 300000
+            );
         }
     }
 });
