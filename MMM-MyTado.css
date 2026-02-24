@@ -13,7 +13,7 @@
     background: rgba(0,0,0,0.15);
     padding: 5px 10px;
     border-radius: 5px;
-    min-width: 180px;
+    min-width: 150px;
 }
 
 .tado-home {
@@ -24,28 +24,8 @@
     margin-bottom: 5px;
 }
 
-.tado-zone-table {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.tado-zone-row {
-    display: flex;
-    justify-content: space-between;
+.tado-zone {
     font-size: 0.9em;
-}
-
-.tado-zone-room {
-    flex: 2;
-}
-
-.tado-zone-temp {
-    flex: 2;
-    text-align: right;
-}
-
-.tado-zone-heating, .tado-zone-window {
-    flex: 1;
-    text-align: center;
+    margin-left: 0;
+    padding: 2px 0;
 }
