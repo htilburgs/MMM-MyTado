@@ -1,35 +1,51 @@
 .tado-wrapper {
     display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
     flex-wrap: wrap;
-    gap: 20px; /* ruimte tussen kolommen */
+    gap: 20px;
 }
 
 .tado-columns {
     display: flex;
-    flex-direction: row;
     gap: 20px;
 }
 
 .tado-column {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0,0,0,0.15);
     padding: 5px 10px;
     border-radius: 5px;
-    min-width: 150px;
+    min-width: 180px;
 }
 
 .tado-home {
     font-weight: bold;
-    font-size: 1em;
-    margin-bottom: 5px;
     text-align: center;
     border-bottom: 1px solid #ccc;
-    padding-bottom: 3px;
+    padding-bottom: 4px;
+    margin-bottom: 5px;
 }
 
-.tado-zone {
+.tado-zone-table {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.tado-zone-row {
+    display: flex;
+    justify-content: space-between;
     font-size: 0.9em;
-    margin-left: 0;
-    padding: 2px 0;
+}
+
+.tado-zone-room {
+    flex: 2;
+}
+
+.tado-zone-temp {
+    flex: 2;
+    text-align: right;
+}
+
+.tado-zone-heating, .tado-zone-window {
+    flex: 1;
+    text-align: center;
 }
