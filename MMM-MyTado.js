@@ -1,9 +1,11 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 1800000, // 30 min
+        updateInterval: 300000, // 5 min
         showTemperature: true,
         showHeating: true,
-        showOpenWindow: true
+        showOpenWindow: true,
+        showZones: [], // lege array = alle zones
+        showHomeName: true // nieuwe parameter: toon home naam
     },
 
     start: function () {
@@ -20,20 +22,34 @@ Module.register("MMM-MyTado", {
 
     getDom: function () {
         const wrapper = document.createElement("div");
+        wrapper.className = "tado-wrapper";
 
         if (!this.tadoData) {
             wrapper.innerHTML = "Tado data loading...";
             return wrapper;
         }
 
-        // Homes & Zones
-        this.tadoData.tadoHomes.forEach((home) => {
-            const homeDiv = document.createElement("div");
-            homeDiv.className = "tado-home";
-            homeDiv.innerHTML = `<strong>Home:</strong> ${home.name}`;
-            wrapper.appendChild(homeDiv);
+        const columns = document.createElement("div");
+        columns.className = "tado-columns";
 
-            home.zones.forEach((zone) => {
+        this.tadoData.tadoHomes.forEach((home) => {
+            const homeCol = document.createElement("div");
+            homeCol.className = "tado-column";
+
+            // Toon home naam als showHomeName true is
+            if (this.config.showHomeName) {
+                const homeTitle = document.createElement("div");
+                homeTitle.className = "tado-home";
+                homeTitle.innerHTML = home.name;
+                homeCol.appendChild(homeTitle);
+            }
+
+            // Zones filteren op showZones
+            const zonesToShow = this.config.showZones.length > 0
+                ? home.zones.filter(z => this.config.showZones.includes(z.name))
+                : home.zones;
+
+            zonesToShow.forEach((zone) => {
                 const zoneDiv = document.createElement("div");
                 zoneDiv.className = "tado-zone";
                 let html = `<strong>${zone.name}</strong>: `;
@@ -60,10 +76,13 @@ Module.register("MMM-MyTado", {
                 }
 
                 zoneDiv.innerHTML = html;
-                homeDiv.appendChild(zoneDiv);
+                homeCol.appendChild(zoneDiv);
             });
+
+            columns.appendChild(homeCol);
         });
 
+        wrapper.appendChild(columns);
         return wrapper;
     }
 });

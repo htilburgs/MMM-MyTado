@@ -1,13 +1,31 @@
+.tado-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.tado-columns {
+    display: flex;
+    gap: 20px;
+}
+
+.tado-column {
+    background: rgba(0,0,0,0.15);
+    padding: 5px 10px;
+    border-radius: 5px;
+    min-width: 150px;
+}
+
 .tado-home {
-    margin-top: 5px;
-    padding: 3px 5px;
-    border-bottom: 1px solid #ccc;
     font-weight: bold;
-    font-size: 1em;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+    margin-bottom: 5px;
 }
 
 .tado-zone {
-    margin-left: 12px;
-    padding: 2px 0;
     font-size: 0.9em;
+    margin-left: 0;
+    padding: 2px 0;
 }

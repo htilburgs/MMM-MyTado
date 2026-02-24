@@ -12,6 +12,7 @@ module.exports = NodeHelper.create({
     refreshToken: null,
     authenticated: false,
     fetching: false,
+    showZones: [],
 
     start: async function () {
         this.tadoClient = new Tado();
@@ -81,11 +82,15 @@ module.exports = NodeHelper.create({
 
                 const zones = await this.tadoClient.getZones(home.id);
 
-                // Parallel fetch with concurrency limit
+                // Filter zones op showZones
+                const zonesToFetch = this.showZones.length > 0
+                    ? zones.filter(z => this.showZones.includes(z.name))
+                    : zones;
+
                 const maxConcurrent = 5;
                 const results = [];
-                for (let i = 0; i < zones.length; i += maxConcurrent) {
-                    const batch = zones.slice(i, i + maxConcurrent);
+                for (let i = 0; i < zonesToFetch.length; i += maxConcurrent) {
+                    const batch = zonesToFetch.slice(i, i + maxConcurrent);
                     const batchResults = await Promise.all(
                         batch.map(async (zone) => {
                             try {
@@ -98,7 +103,7 @@ module.exports = NodeHelper.create({
                         })
                     );
                     results.push(...batchResults.filter(r => r !== null));
-                    await delay(200); // small pause to avoid rate limit
+                    await delay(200);
                 }
                 homeInfo.zones = results;
             }
@@ -119,11 +124,10 @@ module.exports = NodeHelper.create({
     socketNotificationReceived: function (notification, payload) {
         if (notification === "CONFIG") {
             this.config = payload;
+            this.showZones = payload.showZones || [];
 
-            // Initial fetch
             this.getData();
 
-            // Polling interval (default 5 minutes)
             setInterval(() => this.getData(), this.config.updateInterval || 300000);
         }
     }
