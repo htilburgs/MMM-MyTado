@@ -12,13 +12,13 @@ module.exports = NodeHelper.create({
     fetching: false,
     showZones: [],
     apiRateLimit: {
+        limit: null,
         remaining: null,
         reset: null
     },
 
     start: async function () {
         console.log("MMM-MyTado: Node helper started");
-
         this.tadoClient = new Tado();
 
         // Load saved refresh token
@@ -53,14 +53,11 @@ module.exports = NodeHelper.create({
     // =============================
     authenticate: async function () {
         try {
-            const [verify, futureToken] =
-                await this.tadoClient.authenticate(this.refreshToken);
-
+            const [verify, futureToken] = await this.tadoClient.authenticate(this.refreshToken);
             if (verify) {
                 console.log("MMM-MyTado: Device authorization required:");
                 console.log(verify.verification_uri_complete);
             }
-
             await futureToken;
             this.authenticated = true;
             console.log("MMM-MyTado: Authenticated");
@@ -71,9 +68,7 @@ module.exports = NodeHelper.create({
     },
 
     ensureAuth: async function () {
-        if (!this.authenticated) {
-            await this.authenticate();
-        }
+        if (!this.authenticated) await this.authenticate();
     },
 
     // =============================
@@ -81,74 +76,39 @@ module.exports = NodeHelper.create({
     // =============================
     getData: async function () {
         if (this.fetching) return;
-
         await this.ensureAuth();
         if (!this.authenticated) return;
-
         this.fetching = true;
 
         try {
-            const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-
-            // --- USER ---
+            const delay = ms => new Promise(r => setTimeout(r, ms));
             const me = await this.tadoClient.getMe();
             this.updateRateLimit(me);
 
             const homesOut = [];
-
             for (const home of me.homes) {
-                const homeInfo = {
-                    id: home.id,
-                    name: home.name,
-                    zones: []
-                };
-
+                const homeInfo = { id: home.id, name: home.name, zones: [] };
                 const zones = await this.tadoClient.getZones(home.id);
 
-                const zonesToFetch =
-                    this.showZones.length > 0
-                        ? zones.filter((z) =>
-                              this.showZones.includes(z.name)
-                          )
-                        : zones;
+                const zonesToFetch = this.showZones.length > 0
+                    ? zones.filter(z => this.showZones.includes(z.name))
+                    : zones;
 
                 const maxConcurrent = 5;
-
                 for (let i = 0; i < zonesToFetch.length; i += maxConcurrent) {
                     const batch = zonesToFetch.slice(i, i + maxConcurrent);
-
-                    const results = await Promise.all(
-                        batch.map(async (zone) => {
-                            try {
-                                const state =
-                                    await this.tadoClient.getZoneState(
-                                        home.id,
-                                        zone.id
-                                    );
-
-                                return {
-                                    id: zone.id,
-                                    name: zone.name,
-                                    type: zone.type,
-                                    state
-                                };
-                            } catch (err) {
-                                console.error(
-                                    `MMM-MyTado: Zone fetch failed (${zone.name})`,
-                                    err.message
-                                );
-                                return null;
-                            }
-                        })
-                    );
-
-                    homeInfo.zones.push(
-                        ...results.filter((r) => r !== null)
-                    );
-
+                    const results = await Promise.all(batch.map(async (zone) => {
+                        try {
+                            const state = await this.tadoClient.getZoneState(home.id, zone.id);
+                            return { id: zone.id, name: zone.name, type: zone.type, state };
+                        } catch (err) {
+                            console.error(`MMM-MyTado: Zone fetch failed (${zone.name})`, err.message);
+                            return null;
+                        }
+                    }));
+                    homeInfo.zones.push(...results.filter(r => r !== null));
                     await delay(200);
                 }
-
                 homesOut.push(homeInfo);
             }
 
@@ -156,10 +116,8 @@ module.exports = NodeHelper.create({
                 tadoHomes: homesOut,
                 apiRateLimit: this.apiRateLimit
             });
-
             console.log("MMM-MyTado: Data sent");
         } catch (err) {
-            // Auto re-auth on 401
             if (err?.response?.status === 401) {
                 console.log("MMM-MyTado: Token expired — reauth");
                 this.authenticated = false;
@@ -181,10 +139,12 @@ module.exports = NodeHelper.create({
         const headers = response?._headers;
         if (!headers) return;
 
-        this.apiRateLimit.remaining =
-            headers["x-ratelimit-remaining"] ?? null;
-        this.apiRateLimit.reset =
-            headers["x-ratelimit-reset"] ?? null;
+        const h = {};
+        Object.keys(headers).forEach(k => h[k.toLowerCase()] = headers[k]);
+
+        this.apiRateLimit.limit = h["x-ratelimit-limit"] ?? null;
+        this.apiRateLimit.remaining = h["x-ratelimit-remaining"] ?? null;
+        this.apiRateLimit.reset = h["x-ratelimit-reset"] ?? null;
     },
 
     // =============================
@@ -194,13 +154,8 @@ module.exports = NodeHelper.create({
         if (notification === "CONFIG") {
             this.config = payload;
             this.showZones = payload.showZones || [];
-
             this.getData();
-
-            setInterval(
-                () => this.getData(),
-                this.config.updateInterval || 300000
-            );
+            setInterval(() => this.getData(), this.config.updateInterval || 300000);
         }
     }
 });
