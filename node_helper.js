@@ -13,8 +13,19 @@ module.exports = NodeHelper.create({
         this.homeId = null;
         this.previousPayload = null;
         this.updateTimer = null;
+        this.retryCount = 0;
 
         this.tokenFile = path.join(__dirname, "tado_refresh_token.json");
+
+        // ⭐ Token self-healing
+        this.tado.setTokenCallback((token) => {
+            try {
+                fs.writeFileSync(this.tokenFile, JSON.stringify(token, null, 2));
+                console.log("🔄 Token automatisch vernieuwd en opgeslagen");
+            } catch (e) {
+                console.error("Token opslaan mislukt:", e);
+            }
+        });
     },
 
     socketNotificationReceived(notification, payload) {
@@ -26,7 +37,7 @@ module.exports = NodeHelper.create({
     },
 
     // ================================
-    // 🔐 INITIALIZE + AUTH
+    // 🔐 INITIALIZE + AUTH + RETRY
     // ================================
     async initialize() {
         try {
@@ -34,32 +45,19 @@ module.exports = NodeHelper.create({
 
             let refreshToken = null;
 
-            // bestaande token laden
+            // token laden
             if (fs.existsSync(this.tokenFile)) {
                 try {
                     const json = JSON.parse(fs.readFileSync(this.tokenFile));
                     refreshToken = json.refreshToken;
-                    console.log("Refresh token geladen");
+                    console.log("Refresh token geladen uit bestand");
                 } catch (e) {
                     console.error("Token bestand corrupt, opnieuw authenticeren");
                 }
             }
 
-            // OAuth device flow
-            const [verify, futureToken] = await this.tado.authenticate(refreshToken);
-
-            if (verify) {
-                console.log("====================================");
-                console.log("👉 Autoriseer Tado via deze URL:");
-                console.log(verify.verification_uri_complete);
-                console.log("====================================");
-            }
-
-            const token = await futureToken;
-
-            // token opslaan
-            fs.writeFileSync(this.tokenFile, JSON.stringify(token, null, 2));
-            console.log("Refresh token opgeslagen");
+            // OAuth device flow met retry
+            await this.authenticateWithRetry(refreshToken);
 
             // gebruiker ophalen
             const me = await this.tado.getMe();
@@ -79,14 +77,46 @@ module.exports = NodeHelper.create({
             // polling starten
             const interval = this.config.updateInterval || 15000;
             console.log(`Polling gestart: ${interval} ms`);
-
-            this.updateTimer = setInterval(
-                () => this.checkForUpdates(),
-                interval
-            );
+            this.updateTimer = setInterval(() => this.checkForUpdates(), interval);
 
         } catch (err) {
             console.error("Fout bij initialize():", err);
+        }
+    },
+
+    // ================================
+    // 🔄 AUTHENTICATE MET RETRY
+    // ================================
+    async authenticateWithRetry(refreshToken) {
+        const maxRetries = 5;
+        const baseDelay = 2000; // 2s
+
+        for (let i = 0; i <= maxRetries; i++) {
+            try {
+                const [verify, futureToken] = await this.tado.authenticate(refreshToken);
+
+                if (verify) {
+                    console.log("====================================");
+                    console.log("👉 Autoriseer Tado via deze URL:");
+                    console.log(verify.verification_uri_complete);
+                    console.log("====================================");
+                }
+
+                const token = await futureToken;
+                fs.writeFileSync(this.tokenFile, JSON.stringify(token, null, 2));
+                console.log("Refresh token opgeslagen (init)");
+                return; // succes
+
+            } catch (err) {
+                console.error(`Authenticatie fout (attempt ${i + 1}):`, err);
+                if (i < maxRetries) {
+                    const delay = baseDelay * Math.pow(2, i); // exponentiële backoff
+                    console.log(`🔁 Retry over ${delay / 1000}s...`);
+                    await new Promise(r => setTimeout(r, delay));
+                } else {
+                    throw new Error("Authenticatie mislukt na meerdere pogingen");
+                }
+            }
         }
     },
 
@@ -105,15 +135,14 @@ module.exports = NodeHelper.create({
             // zones ophalen
             const zones = await this.tado.getZones(this.homeId);
 
-            // presence ophalen (correct voor v1.1.1)
+            // presence ophalen (home state)
             const homeState = await this.tado.getState(this.homeId);
 
-            // 🔥 parallel zone states
+            // parallel zone states
             const zoneStates = await Promise.all(
                 zones.map(async (zone) => {
                     try {
                         const st = await this.tado.getState(this.homeId, zone.id);
-
                         return {
                             name: zone.name,
                             currentTemp: st.sensorDataPoints?.insideTemperature?.celsius ?? null,
@@ -123,7 +152,6 @@ module.exports = NodeHelper.create({
                                 ? st.openWindowDetected.length > 0
                                 : false
                         };
-
                     } catch (zoneErr) {
                         console.error(`Zone fout (${zone.name}):`, zoneErr);
                         return null;
@@ -137,7 +165,6 @@ module.exports = NodeHelper.create({
                 timestamp: Date.now()
             };
 
-            // alleen pushen bij wijziging
             if (JSON.stringify(payload) !== JSON.stringify(this.previousPayload)) {
                 this.previousPayload = payload;
                 this.sendSocketNotification("TADO_UPDATE", payload);
@@ -147,7 +174,9 @@ module.exports = NodeHelper.create({
             }
 
         } catch (err) {
-            console.error("Fout bij checkForUpdates():", err);
+            console.error("Fout bij checkForUpdates(), probeer opnieuw...");
+            // automatische retry na 5s bij fout
+            setTimeout(() => this.checkForUpdates(), 5000);
         }
     }
 
