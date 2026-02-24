@@ -1,87 +1,72 @@
 Module.register("MMM-MyTado", {
-
     defaults: {
-        updateInterval: 1800000,
+        updateInterval: 300000, // 5 min
         showPresence: true,
+        showTemperature: true,
+        showHeating: true,
         showOpenWindow: true
     },
 
-    start() {
-        console.log("MMM-MyTado frontend gestart");
-        this.dataLoaded = false;
-        this.zones = [];
-        this.presence = "UNKNOWN";
-        this.sendSocketNotification("TADO_INIT", this.config);
+    start: function () {
+        this.tadoData = null;
+        this.sendSocketNotification("CONFIG", this.config);
     },
 
-    getStyles() {
-        return ["MMM-MyTado.css"];
-    },
-
-    socketNotificationReceived(notification, payload) {
-        if (notification === "TADO_UPDATE") {
-            this.zones = payload.zones || [];
-            this.presence = payload.presence;
-            this.dataLoaded = true;
-            this.updateDom(500);
+    socketNotificationReceived: function (notification, payload) {
+        if (notification === "NEW_DATA") {
+            this.tadoData = payload;
+            this.updateDom();
         }
     },
 
-    getDom() {
+    getDom: function () {
         const wrapper = document.createElement("div");
-        wrapper.className = "tado-wrapper";
 
-        if (!this.dataLoaded) {
-            wrapper.innerHTML = "Wachten op realtime data...";
+        if (!this.tadoData) {
+            wrapper.innerHTML = "Tado data loading...";
             return wrapper;
         }
 
-        // Presence indicator
+        // Presence
         if (this.config.showPresence) {
             const presence = document.createElement("div");
-            presence.className = "tado-presence " + this.presence.toLowerCase();
-            presence.innerHTML =
-                this.presence === "HOME"
-                    ? "🟢 Thuis"
-                    : "⚪ Afwezig";
+            presence.innerHTML = `<strong>Presence:</strong> ${this.tadoData.tadoMe.presence || "Unknown"}`;
             wrapper.appendChild(presence);
         }
 
-        // Zones
-        this.zones.forEach(zone => {
-            const zoneDiv = document.createElement("div");
-            zoneDiv.className = "tado-zone";
+        // Homes & Zones
+        this.tadoData.tadoHomes.forEach((home) => {
+            const homeDiv = document.createElement("div");
+            homeDiv.className = "tado-home";
+            homeDiv.innerHTML = `<strong>Home:</strong> ${home.name}`;
+            wrapper.appendChild(homeDiv);
 
-            // status class
-            if (zone.openWindow && this.config.showOpenWindow) {
-                zoneDiv.classList.add("window-open");
-            } else if (zone.heating) {
-                zoneDiv.classList.add("heating");
-            } else {
-                zoneDiv.classList.add("idle");
-            }
+            home.zones.forEach((zone) => {
+                const zoneDiv = document.createElement("div");
+                zoneDiv.className = "tado-zone";
+                let html = `<strong>${zone.name}</strong>: `;
 
-            const title = document.createElement("div");
-            title.className = "tado-zone-name";
-            title.innerHTML = zone.name;
+                if (this.config.showTemperature) {
+                    const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
+                    const target = zone.state.setting?.temperature?.celsius ?? "-";
+                    html += `🌡 ${current}°C / ${target}°C `;
+                }
 
-            const temps = document.createElement("div");
-            temps.className = "tado-temps";
-            temps.innerHTML =
-                `${zone.currentTemp ?? "--"}° → ${zone.targetTemp ?? "--"}°`;
+                if (this.config.showHeating) {
+                    const heating = (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
+                    html += heating ? "🔥 " : "❄ ";
+                }
 
-            zoneDiv.appendChild(title);
-            zoneDiv.appendChild(temps);
+                if (this.config.showOpenWindow) {
+                    const openWindow = Array.isArray(zone.state.openWindowDetected)
+                        ? zone.state.openWindowDetected.length > 0
+                        : false;
+                    if (openWindow) html += "🪟";
+                }
 
-            // open raam waarschuwing
-            if (zone.openWindow && this.config.showOpenWindow) {
-                const warn = document.createElement("div");
-                warn.className = "tado-window-warning";
-                warn.innerHTML = "🪟 Raam open";
-                zoneDiv.appendChild(warn);
-            }
-
-            wrapper.appendChild(zoneDiv);
+                zoneDiv.innerHTML = html;
+                homeDiv.appendChild(zoneDiv);
+            });
         });
 
         return wrapper;
