@@ -1,8 +1,11 @@
+.tado-home {
+    margin-top: 10px;
+    padding: 5px;
+    border-bottom: 1px solid #ccc;
+}
 .tado-zone {
-    margin-bottom: 10px;
-    padding: 8px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.05);
+    margin-left: 15px;
+    font-size: 0.9em;
 }
 
 .tado-zone.heating {
