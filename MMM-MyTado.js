@@ -1,61 +1,89 @@
 Module.register("MMM-MyTado", {
 
     defaults: {
-        updateInterval: 15000,
-        showAway: true,
-        showOpenWindow: true,
-        colored: true
+        updateInterval: 1800000,
+        showPresence: true,
+        showOpenWindow: true
     },
 
     start() {
+        console.log("MMM-MyTado frontend gestart");
+        this.dataLoaded = false;
         this.zones = [];
-        this.presence = null;
-        console.log("MMM-MyTado frontend gestart…");
-
-        // Init node_helper
+        this.presence = "UNKNOWN";
         this.sendSocketNotification("TADO_INIT", this.config);
+    },
+
+    getStyles() {
+        return ["MMM-MyTado.css"];
     },
 
     socketNotificationReceived(notification, payload) {
         if (notification === "TADO_UPDATE") {
-            console.log("Frontend ontvangt data:", payload);
-            this.zones = payload.zones;
+            this.zones = payload.zones || [];
             this.presence = payload.presence;
-            this.updateDom(300);
+            this.dataLoaded = true;
+            this.updateDom(500);
         }
     },
 
     getDom() {
         const wrapper = document.createElement("div");
+        wrapper.className = "tado-wrapper";
 
-        if (!this.zones.length) {
+        if (!this.dataLoaded) {
             wrapper.innerHTML = "Wachten op realtime data...";
             return wrapper;
         }
 
-        const homeDiv = document.createElement("div");
-        homeDiv.className = "bright small";
-        homeDiv.innerHTML = this.presence === "HOME" ? "🏠 Thuis" : "🚗 Afwezig";
-        wrapper.appendChild(homeDiv);
+        // Presence indicator
+        if (this.config.showPresence) {
+            const presence = document.createElement("div");
+            presence.className = "tado-presence " + this.presence.toLowerCase();
+            presence.innerHTML =
+                this.presence === "HOME"
+                    ? "🟢 Thuis"
+                    : "⚪ Afwezig";
+            wrapper.appendChild(presence);
+        }
 
+        // Zones
         this.zones.forEach(zone => {
-            const div = document.createElement("div");
-            div.className = "tado-zone";
+            const zoneDiv = document.createElement("div");
+            zoneDiv.className = "tado-zone";
 
-            if (this.defaults.colored && zone.heating) div.classList.add("heating");
+            // status class
+            if (zone.openWindow && this.config.showOpenWindow) {
+                zoneDiv.classList.add("window-open");
+            } else if (zone.heating) {
+                zoneDiv.classList.add("heating");
+            } else {
+                zoneDiv.classList.add("idle");
+            }
 
-            div.innerHTML = `
-                <b>${zone.name}</b><br/>
-                🌡 ${zone.currentTemp?.toFixed(1)}°C<br/>
-                🎯 ${zone.targetTemp ?? "Uit"}<br/>
-                ${zone.heating ? "🔥 Verwarmen" : "❄️ Idle"}
-                ${zone.openWindow ? "<br/>🪟 Open raam" : ""}
-                <hr/>
-            `;
-            wrapper.appendChild(div);
+            const title = document.createElement("div");
+            title.className = "tado-zone-name";
+            title.innerHTML = zone.name;
+
+            const temps = document.createElement("div");
+            temps.className = "tado-temps";
+            temps.innerHTML =
+                `${zone.currentTemp ?? "--"}° → ${zone.targetTemp ?? "--"}°`;
+
+            zoneDiv.appendChild(title);
+            zoneDiv.appendChild(temps);
+
+            // open raam waarschuwing
+            if (zone.openWindow && this.config.showOpenWindow) {
+                const warn = document.createElement("div");
+                warn.className = "tado-window-warning";
+                warn.innerHTML = "🪟 Raam open";
+                zoneDiv.appendChild(warn);
+            }
+
+            wrapper.appendChild(zoneDiv);
         });
 
         return wrapper;
     }
-
 });
