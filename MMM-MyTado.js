@@ -1,6 +1,6 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 1800000, // 30 min
+        updateInterval: 300000, // 5 min
         showTemperature: true,
         showHeating: true,
         showOpenWindow: true
@@ -20,18 +20,25 @@ Module.register("MMM-MyTado", {
 
     getDom: function () {
         const wrapper = document.createElement("div");
+        wrapper.className = "tado-wrapper";
 
         if (!this.tadoData) {
             wrapper.innerHTML = "Tado data loading...";
             return wrapper;
         }
 
-        // Homes & Zones
+        // Columns: each home is een kolom
+        const columns = document.createElement("div");
+        columns.className = "tado-columns";
+
         this.tadoData.tadoHomes.forEach((home) => {
-            const homeDiv = document.createElement("div");
-            homeDiv.className = "tado-home";
-            homeDiv.innerHTML = `<strong>Home:</strong> ${home.name}`;
-            wrapper.appendChild(homeDiv);
+            const homeCol = document.createElement("div");
+            homeCol.className = "tado-column";
+
+            const homeTitle = document.createElement("div");
+            homeTitle.className = "tado-home";
+            homeTitle.innerHTML = home.name;
+            homeCol.appendChild(homeTitle);
 
             home.zones.forEach((zone) => {
                 const zoneDiv = document.createElement("div");
@@ -60,10 +67,13 @@ Module.register("MMM-MyTado", {
                 }
 
                 zoneDiv.innerHTML = html;
-                homeDiv.appendChild(zoneDiv);
+                homeCol.appendChild(zoneDiv);
             });
+
+            columns.appendChild(homeCol);
         });
 
+        wrapper.appendChild(columns);
         return wrapper;
     }
 });
