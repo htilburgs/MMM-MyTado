@@ -13,7 +13,7 @@
     background: rgba(0,0,0,0.15);
     padding: 5px 10px;
     border-radius: 5px;
-    min-width: 200px; /* vaste kolombreedte per home */
+    min-width: 150px;
 }
 
 .tado-home {
@@ -24,29 +24,8 @@
     margin-bottom: 5px;
 }
 
-.tado-zone-row {
-    display: flex;
-    justify-content: flex-start;
-    margin-bottom: 2px;
-}
-
-.tado-col {
-    padding-right: 10px;
-}
-
-/* Vaste breedtes per kolom */
-.tado-col.room {
-    width: 80px;
-}
-.tado-col.temp {
-    width: 80px;
-    text-align: right;
-}
-.tado-col.heating {
-    width: 30px;
-    text-align: center;
-}
-.tado-col.window {
-    width: 30px;
-    text-align: center;
+.tado-zone {
+    font-size: 0.9em;
+    margin-left: 0;
+    padding: 2px 0;
 }
