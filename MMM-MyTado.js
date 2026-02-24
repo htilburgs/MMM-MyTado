@@ -1,21 +1,24 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 300000, // 5 min
+        updateInterval: 300000,
         showTemperature: true,
         showHeating: true,
         showOpenWindow: true,
-        showZones: [], // lege array = alle zones
-        showHomeName: true // nieuwe parameter: toon home naam
+        showZones: [],
+        showHomeName: true,
+        debug: false
     },
 
     start: function () {
         this.tadoData = null;
+        this.apiRateLimit = null;
         this.sendSocketNotification("CONFIG", this.config);
     },
 
     socketNotificationReceived: function (notification, payload) {
         if (notification === "NEW_DATA") {
             this.tadoData = payload;
+            this.apiRateLimit = payload.apiRateLimit || null;
             this.updateDom();
         }
     },
@@ -36,7 +39,6 @@ Module.register("MMM-MyTado", {
             const homeCol = document.createElement("div");
             homeCol.className = "tado-column";
 
-            // Toon home naam als showHomeName true is
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
@@ -44,32 +46,32 @@ Module.register("MMM-MyTado", {
                 homeCol.appendChild(homeTitle);
             }
 
-            // Zones filteren op showZones
-            const zonesToShow = this.config.showZones.length > 0
-                ? home.zones.filter(z => this.config.showZones.includes(z.name))
-                : home.zones;
-
-            zonesToShow.forEach((zone) => {
+            home.zones.forEach((zone) => {
                 const zoneDiv = document.createElement("div");
                 zoneDiv.className = "tado-zone";
+
                 let html = `<strong>${zone.name}</strong>: `;
 
-                // Temperature
                 if (this.config.showTemperature) {
-                    const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
-                    const target = zone.state.setting?.temperature?.celsius ?? "-";
+                    const current =
+                        zone.state.sensorDataPoints?.insideTemperature
+                            ?.celsius ?? "-";
+                    const target =
+                        zone.state.setting?.temperature?.celsius ?? "-";
                     html += `🌡 ${current}°C / ${target}°C `;
                 }
 
-                // Heating
                 if (this.config.showHeating) {
-                    const heating = (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
+                    const heating =
+                        (zone.state.activityDataPoints?.heatingPower
+                            ?.percentage ?? 0) > 0;
                     html += heating ? "🔥 " : "❄ ";
                 }
 
-                // Open window
                 if (this.config.showOpenWindow) {
-                    const openWindow = Array.isArray(zone.state.openWindowDetected)
+                    const openWindow = Array.isArray(
+                        zone.state.openWindowDetected
+                    )
                         ? zone.state.openWindowDetected.length > 0
                         : false;
                     if (openWindow) html += "🪟";
@@ -83,6 +85,23 @@ Module.register("MMM-MyTado", {
         });
 
         wrapper.appendChild(columns);
+
+        // DEBUG INFO
+        if (this.config.debug && this.apiRateLimit) {
+            const dbg = document.createElement("div");
+            dbg.className = "tado-debug";
+
+            dbg.innerHTML = `
+                <hr>
+                API remaining: ${
+                    this.apiRateLimit.remaining ?? "unknown"
+                }<br>
+                Reset: ${this.apiRateLimit.reset ?? "unknown"}
+            `;
+
+            wrapper.appendChild(dbg);
+        }
+
         return wrapper;
     }
 });
