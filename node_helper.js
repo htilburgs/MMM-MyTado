@@ -19,6 +19,7 @@ module.exports = NodeHelper.create({
 
     start: async function () {
         console.log("MMM-MyTado: Node helper started");
+
         this.tadoClient = new Tado();
 
         // Load saved refresh token
@@ -49,7 +50,7 @@ module.exports = NodeHelper.create({
     },
 
     // =============================
-    // AUTHENTICATION (self healing)
+    // AUTHENTICATION
     // =============================
     authenticate: async function () {
         try {
@@ -72,6 +73,20 @@ module.exports = NodeHelper.create({
     },
 
     // =============================
+    // PARSE RATE LIMIT HEADERS
+    // =============================
+    parseRateLimit: function (response) {
+        if (!response?.headers) return;
+
+        const h = {};
+        Object.keys(response.headers).forEach(k => h[k.toLowerCase()] = response.headers[k]);
+
+        this.apiRateLimit.limit = h["x-ratelimit-limit"] ?? null;
+        this.apiRateLimit.remaining = h["x-ratelimit-remaining"] ?? null;
+        this.apiRateLimit.reset = h["x-ratelimit-reset"] ?? null;
+    },
+
+    // =============================
     // DATA FETCH
     // =============================
     getData: async function () {
@@ -82,10 +97,14 @@ module.exports = NodeHelper.create({
 
         try {
             const delay = ms => new Promise(r => setTimeout(r, ms));
-            const me = await this.tadoClient.getMe();
-            this.updateRateLimit(me);
+
+            // --- GET ME + rate-limit ---
+            const meResponse = await this.tadoClient.getMe({ raw: true });
+            this.parseRateLimit(meResponse);
+            const me = meResponse.data;
 
             const homesOut = [];
+
             for (const home of me.homes) {
                 const homeInfo = { id: home.id, name: home.name, zones: [] };
                 const zones = await this.tadoClient.getZones(home.id);
@@ -95,9 +114,11 @@ module.exports = NodeHelper.create({
                     : zones;
 
                 const maxConcurrent = 5;
+
                 for (let i = 0; i < zonesToFetch.length; i += maxConcurrent) {
                     const batch = zonesToFetch.slice(i, i + maxConcurrent);
-                    const results = await Promise.all(batch.map(async (zone) => {
+
+                    const results = await Promise.all(batch.map(async zone => {
                         try {
                             const state = await this.tadoClient.getZoneState(home.id, zone.id);
                             return { id: zone.id, name: zone.name, type: zone.type, state };
@@ -106,9 +127,11 @@ module.exports = NodeHelper.create({
                             return null;
                         }
                     }));
+
                     homeInfo.zones.push(...results.filter(r => r !== null));
                     await delay(200);
                 }
+
                 homesOut.push(homeInfo);
             }
 
@@ -116,6 +139,7 @@ module.exports = NodeHelper.create({
                 tadoHomes: homesOut,
                 apiRateLimit: this.apiRateLimit
             });
+
             console.log("MMM-MyTado: Data sent");
         } catch (err) {
             if (err?.response?.status === 401) {
@@ -130,21 +154,6 @@ module.exports = NodeHelper.create({
         } finally {
             this.fetching = false;
         }
-    },
-
-    // =============================
-    // RATE LIMIT PARSER
-    // =============================
-    updateRateLimit: function (response) {
-        const headers = response?._headers;
-        if (!headers) return;
-
-        const h = {};
-        Object.keys(headers).forEach(k => h[k.toLowerCase()] = headers[k]);
-
-        this.apiRateLimit.limit = h["x-ratelimit-limit"] ?? null;
-        this.apiRateLimit.remaining = h["x-ratelimit-remaining"] ?? null;
-        this.apiRateLimit.reset = h["x-ratelimit-reset"] ?? null;
     },
 
     // =============================
