@@ -45,7 +45,6 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Table header
             const thead = document.createElement("thead");
             const headerRow = document.createElement("tr");
 
@@ -104,11 +103,15 @@ Module.register("MMM-MyTado", {
                     else tempColor = "temp-hot";
                 }
 
-                // Vochtigheid
-                let humidityDisplay = "-";
-                const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
-                if (!isNaN(humidityNum)) {
-                    humidityDisplay = `💦 ${humidityNum.toFixed(0)}%`;
+                // Vochtigheid (niet tonen bij warmwaterzones)
+                let humidityDisplay = "";
+                if (!isHotWaterZone) {
+                    const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
+                    if (!isNaN(humidityNum)) {
+                        humidityDisplay = `💦 ${humidityNum.toFixed(0)}%`;
+                    } else {
+                        humidityDisplay = "-";
+                    }
                 }
 
                 // Status iconen
