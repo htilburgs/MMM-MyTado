@@ -46,10 +46,12 @@ The first time you run the module, you will need to authenticate with the Tado A
 The module will log a URL that you need to visit in your browser to complete the authentication process. </br>
 Check the logs for a message like this:
 ```
-MMM-MyTado: Device authentication required. Please visit the following URL:
+MMM-MyTado: Device authentication required. 
+Open this URL to authenticate:
 https://login.tado.com/oauth2/device?user_code=XXXXXX
-Visit the URL in your browser and follow the instructions to authenticate the module with your Tado account.
 ```
+Visit the URL in your browser and follow the instructions to authenticate the module with your Tado account.
+
 ## Configuration Options
 <table width="100%">
 	<thead>
@@ -59,14 +61,6 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 		</tr>
 	</thead>
 	<tbody>
-        <tr>
-			<td><code>username</code></td>
-			<td><b>Required</b> - Your Tado username.</td>
-		</tr>
-        <tr>
-			<td><code>password</code></td>
-			<td><b>Required</b> - Your Tado password.</td>
-		</tr>
         <tr>
             <td><code>updateInterval</code></td>
             <td><b>Optional</b> - In milliseconds the update interval. Default: <code>300000</code> 
