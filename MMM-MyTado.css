@@ -32,3 +32,8 @@
 .tado-status {
     text-align: center;
 }
+
+.tado-table th {
+    background-color: #f2f2f2;
+    text-transform: uppercase; /* Zorgt dat alles in hoofdletters staat */
+}
