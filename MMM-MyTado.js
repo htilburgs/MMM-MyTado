@@ -68,7 +68,7 @@ Module.register("MMM-MyTado", {
                 if (heatingPower > 0) {
                     statusIcons += "🔥";
                 } else if (frostProtection) {
-                    statusIcons += "🧊";
+                    statusIcons += "❄️";
                 }
                 if (windowOpen) {
                     statusIcons += "🪟";
