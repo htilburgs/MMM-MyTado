@@ -2,10 +2,8 @@ Module.register("MMM-MyTado", {
     defaults: {
         updateInterval: 300000, // 5 min
         showTemperature: true,
-        showHeating: true,
-        showOpenWindow: true,
         showZones: [], // lege array = alle zones
-        showHomeName: true // nieuwe parameter: toon home naam
+        showHomeName: true // toon home naam
     },
 
     start: function () {
@@ -29,60 +27,80 @@ Module.register("MMM-MyTado", {
             return wrapper;
         }
 
-        const columns = document.createElement("div");
-        columns.className = "tado-columns";
-
         this.tadoData.tadoHomes.forEach((home) => {
-            const homeCol = document.createElement("div");
-            homeCol.className = "tado-column";
-
-            // Toon home naam als showHomeName true is
+            // Toon home titel
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
-                homeTitle.innerHTML = home.name;
-                homeCol.appendChild(homeTitle);
+                homeTitle.textContent = home.name;
+                wrapper.appendChild(homeTitle);
             }
 
-            // Zones filteren op showZones
+            const table = document.createElement("table");
+            table.className = "tado-table";
+
+            // Table header
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+
+            // Kolomnamen altijd in hoofdletters
+            const zoneHeader = document.createElement("th");
+            zoneHeader.textContent = "ZONE".toUpperCase();
+
+            headerRow.appendChild(zoneHeader);
+
+            if (this.config.showTemperature) {
+                const tempHeader = document.createElement("th");
+                tempHeader.textContent = "TEMP (°C)".toUpperCase();
+                headerRow.appendChild(tempHeader);
+            }
+
+            const statusHeader = document.createElement("th");
+            statusHeader.textContent = "STATUS".toUpperCase();
+            headerRow.appendChild(statusHeader);
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Filter zones
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
 
+            const tbody = document.createElement("tbody");
             zonesToShow.forEach((zone) => {
-                const zoneDiv = document.createElement("div");
-                zoneDiv.className = "tado-zone";
-                let html = `<strong>${zone.name}</strong>: `;
+                const currentTemp = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
+                const targetTemp = zone.state.setting?.temperature?.celsius ?? "-";
 
-                // Temperature
-                if (this.config.showTemperature) {
-                    const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
-                    const target = zone.state.setting?.temperature?.celsius ?? "-";
-                    html += `🌡 ${current}°C / ${target}°C `;
+                const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
+                const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
+
+                const windowOpen = zone.state.openWindowDetected?.length > 0;
+
+                // Status icon: 🔥 verwarming, 🧊 vorstbeveiliging, 🪟 open raam
+                let statusIcons = "";
+                if (heatingPower > 0) {
+                    statusIcons += "🔥";
+                } else if (frostProtection) {
+                    statusIcons += "🧊";
+                }
+                if (windowOpen) {
+                    statusIcons += "🪟";
                 }
 
-                // Heating
-                if (this.config.showHeating) {
-                    const heating = (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
-                    html += heating ? "🔥 " : "❄ ";
-                }
-
-                // Open window
-                if (this.config.showOpenWindow) {
-                    const openWindow = Array.isArray(zone.state.openWindowDetected)
-                        ? zone.state.openWindowDetected.length > 0
-                        : false;
-                    if (openWindow) html += "🪟";
-                }
-
-                zoneDiv.innerHTML = html;
-                homeCol.appendChild(zoneDiv);
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td><strong>${zone.name}</strong></td>
+                    ${this.config.showTemperature ? `<td>${currentTemp} / ${targetTemp}</td>` : ""}
+                    <td>${statusIcons}</td>
+                `;
+                tbody.appendChild(row);
             });
 
-            columns.appendChild(homeCol);
+            table.appendChild(tbody);
+            wrapper.appendChild(table);
         });
 
-        wrapper.appendChild(columns);
         return wrapper;
     }
 });
