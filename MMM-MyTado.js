@@ -19,10 +19,11 @@ Module.register("MMM-MyTado", {
     },
 
     getCurrentTemperature: function(zone) {
+        // Alleen voor radiatoren / kamers
         if (zone.state.sensorDataPoints?.insideTemperature?.celsius != null) {
             return parseFloat(zone.state.sensorDataPoints.insideTemperature.celsius);
         }
-        return NaN;
+        return NaN; // Warm water gebruikt target als placeholder
     },
 
     getDom: function () {
@@ -45,6 +46,7 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
+            // Table header
             const thead = document.createElement("thead");
             const headerRow = document.createElement("tr");
 
@@ -57,9 +59,9 @@ Module.register("MMM-MyTado", {
                 tempHeader.textContent = "TEMP (°C)".toUpperCase();
                 headerRow.appendChild(tempHeader);
 
-                // Extra kolom voor vochtigheid, maar geen titel
+                // Extra kolom voor vochtigheid, zonder titel
                 const humidityHeader = document.createElement("th");
-                humidityHeader.textContent = ""; 
+                humidityHeader.textContent = "";
                 headerRow.appendChild(humidityHeader);
             }
 
@@ -107,7 +109,7 @@ Module.register("MMM-MyTado", {
                 let humidityDisplay = "-";
                 const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
                 if (!isNaN(humidityNum)) {
-                    humidityDisplay = `${humidityNum.toFixed(0)}%`;
+                    humidityDisplay = `💦 ${humidityNum.toFixed(0)}%`;
                 }
 
                 // Status iconen
