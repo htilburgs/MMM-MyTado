@@ -54,10 +54,25 @@ Module.register("MMM-MyTado", {
                 const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
                 const target = zone.state.setting?.temperature?.celsius ?? "-";
 
+                // =====================
+                // STATUS CHECKS
+                // =====================
+                let statusIcon = "–"; // fallback
+
+                const openWindowDetected = zone.state.openWindowDetected;
                 const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
-                const heating = heatingPower > 0;
-                const heatingOff = zone.state.setting?.type === "HEATING_OFF";
-                const openWindow = Array.isArray(zone.state.openWindowDetected) && zone.state.openWindowDetected.length > 0;
+                const settingType = zone.state.setting?.type;
+
+                if (this.config.showOpenWindow &&
+                    openWindowDetected &&
+                    Array.isArray(openWindowDetected) &&
+                    openWindowDetected.length > 0) {
+                    statusIcon = "🪟"; // open raam
+                } else if (this.config.showHeating && heatingPower > 0) {
+                    statusIcon = "🔥"; // verwarming
+                } else if (this.config.showHeating && settingType === "HEATING_OFF") {
+                    statusIcon = "❄️"; // vorstbeveiliging
+                }
 
                 // 1️⃣ Room name
                 const tdName = document.createElement("td");
@@ -92,17 +107,6 @@ Module.register("MMM-MyTado", {
                 // 6️⃣ Status icoon
                 const tdStatus = document.createElement("td");
                 tdStatus.className = "tado-status";
-
-                let statusIcon = "–"; // fallback
-
-                if (this.config.showOpenWindow && openWindow) {
-                    statusIcon = "🪟"; // open raam
-                } else if (this.config.showHeating && heating) {
-                    statusIcon = "🔥"; // verwarming
-                } else if (this.config.showHeating && heatingOff) {
-                    statusIcon = "❄️"; // vorstbeveiliging
-                }
-
                 tdStatus.innerHTML = statusIcon;
                 row.appendChild(tdStatus);
 
