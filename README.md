@@ -52,6 +52,9 @@ https://login.tado.com/oauth2/device?user_code=XXXXXX
 ```
 Visit the URL in your browser and follow the instructions to authenticate the module with your Tado account.
 
+<img width="250" height="200" alt="image" src="https://github.com/user-attachments/assets/3a3b2b01-909b-4eaf-a8e5-c356e2b66289" /><img width="250" height="200" alt="image" src="https://github.com/user-attachments/assets/2f450205-6a15-4435-8392-6040dcbeb0c4" /><img width="250" height="200" alt="image" src="https://github.com/user-attachments/assets/f6a17c2c-6cfe-4a4a-8bfb-09f56d0a05ba" />
+
+
 ## Configuration Options
 <table width="100%">
 	<thead>
