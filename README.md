@@ -41,6 +41,15 @@ Add the module to your modules array in your config.js.
   }
 },
 ```
+## Authentication
+The first time you run the module, you will need to authenticate with the Tado API. </br>
+The module will log a URL that you need to visit in your browser to complete the authentication process. </br>
+Check the logs for a message like this:
+```
+MMM-MyTado: Device authentication required. Please visit the following URL:
+https://login.tado.com/oauth2/device?user_code=XXXXXX
+Visit the URL in your browser and follow the instructions to authenticate the module with your Tado account.
+```
 ## Configuration Options
 <table width="100%">
 	<thead>
