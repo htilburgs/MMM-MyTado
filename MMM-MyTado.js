@@ -46,21 +46,25 @@ Module.register("MMM-MyTado", {
 
             home.zones.forEach(zone => {
 
+                // -----------------------
+                // Debug log van zone data
+                // -----------------------
+                if (this.config.debug) {
+                    console.log("Zone data:", zone.state);
+                }
+
                 const row = document.createElement("tr");
 
-                const current =
-                    zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
-                const target =
-                    zone.state.setting?.temperature?.celsius ?? "-";
+                const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
+                const target = zone.state.setting?.temperature?.celsius ?? "-";
 
                 // =====================
                 // VEILIGE STATUSCHECK
                 // =====================
+                let statusIcon = "–"; // fallback
                 const openWindowDetected = zone.state.openWindowDetected;
                 const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
                 const settingType = zone.state.setting?.type;
-
-                let statusIcon = "–"; // fallback als geen conditie klopt
 
                 if (this.config.showOpenWindow &&
                     openWindowDetected &&
