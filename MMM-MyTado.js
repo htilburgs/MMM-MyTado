@@ -32,112 +32,60 @@ Module.register("MMM-MyTado", {
             return wrapper;
         }
 
-        this.tadoData.forEach(home => {
-            const homeBlock = document.createElement("div");
-            homeBlock.className = "tado-home-block";
+        const columns = document.createElement("div");
+        columns.className = "tado-columns";
 
-            // 🔹 Home naam
+        this.tadoData.forEach(home => {
+            const homeCol = document.createElement("div");
+            homeCol.className = "tado-column";
+
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
                 homeTitle.innerHTML = home.name;
-                homeBlock.appendChild(homeTitle);
+                homeCol.appendChild(homeTitle);
             }
 
             home.zones.forEach(zone => {
-                const row = document.createElement("div");
-                row.className = "tado-row";
+                const zoneDiv = document.createElement("div");
+                zoneDiv.className = "tado-zone";
 
-                // waarden ophalen
-                const current =
-                    zone.state?.sensorDataPoints?.insideTemperature?.celsius;
-                const target =
-                    zone.state?.setting?.temperature?.celsius;
+                let html = `<strong>${zone.name}</strong>: `;
 
-                const heating =
-                    (zone.state?.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
+                if (this.config.showTemperature) {
+                    const current =
+                        zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
+                    const target =
+                        zone.state.setting?.temperature?.celsius ?? "-";
 
-                const openWindow =
-                    Array.isArray(zone.state?.openWindowDetected)
+                    html += `🌡 ${current}°C / ${target}°C `;
+                }
+
+                if (this.config.showHeating) {
+                    const heating =
+                        (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
+                    html += heating ? "🔥 " : "❄ ";
+                }
+
+                if (this.config.showOpenWindow) {
+                    const openWindow = Array.isArray(zone.state.openWindowDetected)
                         ? zone.state.openWindowDetected.length > 0
                         : false;
 
-                const heatingOff =
-                    zone.state?.setting?.type === "HEATING_OFF";
-
-                // =====================
-                // Kolom 1 — room name (rechts)
-                // =====================
-                const name = document.createElement("div");
-                name.className = "tado-room";
-                name.innerHTML = zone.name + ":";
-                row.appendChild(name);
-
-                // =====================
-                // Kolom 2 — thermometer
-                // =====================
-                const thermo = document.createElement("div");
-                thermo.className = "tado-thermo";
-                thermo.innerHTML = this.config.showTemperature ? "T" : "";
-                row.appendChild(thermo);
-
-                // =====================
-                // Kolom 3 — current temp (links)
-                // =====================
-                const currentDiv = document.createElement("div");
-                currentDiv.className = "tado-current";
-                if (this.config.showTemperature) {
-                    currentDiv.innerHTML =
-                        current !== undefined ? `${current.toFixed(2)} C` : "- C";
-                }
-                row.appendChild(currentDiv);
-
-                // =====================
-                // Kolom 4 — separator (center)
-                // =====================
-                const sep = document.createElement("div");
-                sep.className = "tado-separator";
-                sep.innerHTML = this.config.showTemperature ? "/" : "";
-                row.appendChild(sep);
-
-                // =====================
-                // Kolom 5 — target temp (rechts)
-                // =====================
-                const targetDiv = document.createElement("div");
-                targetDiv.className = "tado-target";
-                if (this.config.showTemperature) {
-                    targetDiv.innerHTML =
-                        target !== undefined ? `${target} C` : "- C";
-                }
-                row.appendChild(targetDiv);
-
-                // =====================
-                // Kolom 6 — status icoon
-                // =====================
-                const status = document.createElement("div");
-                status.className = "tado-status";
-
-                let statusIcon = "S";
-
-                if (this.config.showOpenWindow && openWindow) {
-                    statusIcon = "🪟";
-                } else if (this.config.showHeating && heating) {
-                    statusIcon = "🔥";
-                } else if (this.config.showHeating && heatingOff) {
-                    statusIcon = "❄";
+                    if (openWindow) html += "🪟";
                 }
 
-                status.innerHTML = statusIcon;
-                row.appendChild(status);
-
-                homeBlock.appendChild(row);
+                zoneDiv.innerHTML = html;
+                homeCol.appendChild(zoneDiv);
             });
 
-            wrapper.appendChild(homeBlock);
+            columns.appendChild(homeCol);
         });
 
+        wrapper.appendChild(columns);
+
         // =====================
-        // DEBUG RATE LIMIT
+        // DEBUG RATE-LIMIT
         // =====================
         if (this.config.debug && this.apiRateLimit) {
             const dbg = document.createElement("div");
