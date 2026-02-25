@@ -65,9 +65,9 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 | `showOpenWindow`		| 
 | `showColumnHeaders`	| 
 | `zoneColumnName`		| 
-| ` tempColumnName` 	| 
-| ` humidityColumnName` | 
-| ` statusColumnName`   | 
+| `tempColumnName` 		| 
+| `humidityColumnName` 	| 
+| `statusColumnName`   	| 
 
 ## Versions
 v1.0.0 - Initial release
