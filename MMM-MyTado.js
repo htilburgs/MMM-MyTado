@@ -1,9 +1,16 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 300000, // 5 min
+        updateInterval: 300000,
         showTemperature: true,
-        showZones: [], // lege array = alle zones
-        showHomeName: true // toon home naam
+        showZones: [],
+        showHomeName: true,
+
+        // Kolomnamen variabelen
+        showColumnHeaders: true, // true = toon kolomnamen, false = verberg ze
+        zoneColumnName: "ZONE",
+        tempColumnName: "TEMP (°C)",
+        humidityColumnName: "", // leeg voor geen titel
+        statusColumnName: "STATUS"
     },
 
     start: function () {
@@ -18,6 +25,13 @@ Module.register("MMM-MyTado", {
         }
     },
 
+    getCurrentTemperature: function(zone) {
+        if (zone.state.sensorDataPoints?.insideTemperature?.celsius != null) {
+            return parseFloat(zone.state.sensorDataPoints.insideTemperature.celsius);
+        }
+        return NaN;
+    },
+
     getDom: function () {
         const wrapper = document.createElement("div");
         wrapper.className = "tado-wrapper";
@@ -28,7 +42,6 @@ Module.register("MMM-MyTado", {
         }
 
         this.tadoData.tadoHomes.forEach((home) => {
-            // Toon home titel
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
@@ -39,59 +52,88 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Table header
-            const thead = document.createElement("thead");
-            const headerRow = document.createElement("tr");
+            // Kolomkoppen
+            if (this.config.showColumnHeaders) {
+                const thead = document.createElement("thead");
+                const headerRow = document.createElement("tr");
 
-            // Kolomnamen altijd in hoofdletters
-            const zoneHeader = document.createElement("th");
-            zoneHeader.textContent = "ZONE".toUpperCase();
+                const zoneHeader = document.createElement("th");
+                zoneHeader.textContent = this.config.zoneColumnName.toUpperCase();
+                headerRow.appendChild(zoneHeader);
 
-            headerRow.appendChild(zoneHeader);
+                if (this.config.showTemperature) {
+                    const tempHeader = document.createElement("th");
+                    tempHeader.textContent = this.config.tempColumnName.toUpperCase();
+                    headerRow.appendChild(tempHeader);
 
-            if (this.config.showTemperature) {
-                const tempHeader = document.createElement("th");
-                tempHeader.textContent = "TEMP (°C)".toUpperCase();
-                headerRow.appendChild(tempHeader);
+                    const humidityHeader = document.createElement("th");
+                    humidityHeader.textContent = this.config.humidityColumnName;
+                    headerRow.appendChild(humidityHeader);
+                }
+
+                const statusHeader = document.createElement("th");
+                statusHeader.textContent = this.config.statusColumnName.toUpperCase();
+                headerRow.appendChild(statusHeader);
+
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
             }
 
-            const statusHeader = document.createElement("th");
-            statusHeader.textContent = "STATUS".toUpperCase();
-            headerRow.appendChild(statusHeader);
-
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            // Filter zones
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
 
             const tbody = document.createElement("tbody");
             zonesToShow.forEach((zone) => {
-                const currentTemp = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
-                const targetTemp = zone.state.setting?.temperature?.celsius ?? "-";
-
                 const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
-
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Status icon: 🔥 verwarming, ❄️ vorstbeveiliging, 🪟 open raam
+                const isHotWaterZone = zone.type?.toLowerCase().includes("hotwater") || zone.name.toLowerCase().includes("warm water");
+
+                const currentTempNum = this.getCurrentTemperature(zone);
+                const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
+
+                // Temperatuur display met °
+                let tempDisplay = "-";
+                let tempColor = "";
+
+                if (isHotWaterZone && !isNaN(targetTempNum)) {
+                    tempDisplay = targetTempNum.toFixed(1) + "°";
+                    if (targetTempNum < 18) tempColor = "temp-cold";
+                    else if (targetTempNum <= 22) tempColor = "temp-ok";
+                    else tempColor = "temp-hot";
+                } else if (!isNaN(currentTempNum)) {
+                    const currentTempStr = currentTempNum.toFixed(1);
+                    const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
+                    tempDisplay = `${currentTempStr}° / ${targetTempStr === "OFF" ? "OFF" : targetTempStr + "°"}`;
+                    if (currentTempNum < 18) tempColor = "temp-cold";
+                    else if (currentTempNum <= 22) tempColor = "temp-ok";
+                    else tempColor = "temp-hot";
+                }
+
+                // Vochtigheid (niet tonen bij warmwaterzones)
+                let humidityDisplay = "";
+                if (!isHotWaterZone) {
+                    const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
+                    if (!isNaN(humidityNum)) {
+                        humidityDisplay = `💦 ${humidityNum.toFixed(0)}%`;
+                    } else {
+                        humidityDisplay = "-";
+                    }
+                }
+
+                // Status iconen
                 let statusIcons = "";
-                if (heatingPower > 0) {
-                    statusIcons += "🔥";
-                } else if (frostProtection) {
-                    statusIcons += "❄️";
-                }
-                if (windowOpen) {
-                    statusIcons += "🪟";
-                }
+                if (heatingPower > 0) statusIcons += `<span class="status-heating">🔥</span>`;
+                else if (frostProtection) statusIcons += `<span class="status-frost">❄️</span>`;
+                if (windowOpen) statusIcons += `<span class="status-window">🪟</span>`;
+                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Warm water">💧</span>`;
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td><strong>${zone.name}</strong></td>
-                    ${this.config.showTemperature ? `<td>${currentTemp} / ${targetTemp}</td>` : ""}
+                    ${this.config.showTemperature ? `<td class="${tempColor}">${tempDisplay}</td><td>${humidityDisplay}</td>` : ""}
                     <td>${statusIcons}</td>
                 `;
                 tbody.appendChild(row);
