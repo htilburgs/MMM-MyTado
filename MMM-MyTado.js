@@ -42,9 +42,23 @@ Module.register("MMM-MyTado", {
             // Table header
             const thead = document.createElement("thead");
             const headerRow = document.createElement("tr");
-            headerRow.innerHTML = `<th>Zone</th>
-                                   ${this.config.showTemperature ? "<th>Temp (°C)</th>" : ""}
-                                   <th>Status</th>`;
+
+            // Kolomnamen altijd in hoofdletters
+            const zoneHeader = document.createElement("th");
+            zoneHeader.textContent = "ZONE".toUpperCase();
+
+            headerRow.appendChild(zoneHeader);
+
+            if (this.config.showTemperature) {
+                const tempHeader = document.createElement("th");
+                tempHeader.textContent = "TEMP (°C)".toUpperCase();
+                headerRow.appendChild(tempHeader);
+            }
+
+            const statusHeader = document.createElement("th");
+            statusHeader.textContent = "STATUS".toUpperCase();
+            headerRow.appendChild(statusHeader);
+
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
@@ -68,7 +82,7 @@ Module.register("MMM-MyTado", {
                 if (heatingPower > 0) {
                     statusIcons += "🔥";
                 } else if (frostProtection) {
-                    statusIcons += "❄️";
+                    statusIcons += "🧊";
                 }
                 if (windowOpen) {
                     statusIcons += "🪟";
