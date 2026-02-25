@@ -35,8 +35,6 @@ Module.register("MMM-MyTado", {
         }
 
         this.tadoData.forEach(home => {
-
-            // 🏠 Home titel
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
@@ -49,31 +47,50 @@ Module.register("MMM-MyTado", {
 
             home.zones.forEach(zone => {
 
+                // -----------------------
+                // Debug log van zone data
+                // -----------------------
+                if (this.config.debug) {
+                    console.log("Zone data:", zone.state);
+                }
+
                 const row = document.createElement("tr");
 
                 const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
                 const target = zone.state.setting?.temperature?.celsius ?? "-";
 
                 // =====================
-                // STATUS CHECKS
+                // STATUS CHECKS VEILIG
                 // =====================
                 let statusIcon = "–"; // fallback
-
                 const openWindowDetected = zone.state.openWindowDetected;
                 const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
                 const settingType = zone.state.setting?.type;
 
+                // Open raam (array of boolean)
                 if (this.config.showOpenWindow &&
                     openWindowDetected &&
-                    Array.isArray(openWindowDetected) &&
-                    openWindowDetected.length > 0) {
-                    statusIcon = "🪟"; // open raam
-                } else if (this.config.showHeating && heatingPower > 0) {
-                    statusIcon = "🔥"; // verwarming
-                } else if (this.config.showHeating && settingType === "HEATING_OFF") {
-                    statusIcon = "❄️"; // vorstbeveiliging
+                    ((Array.isArray(openWindowDetected) && openWindowDetected.length > 0) || 
+                     typeof openWindowDetected === "boolean" && openWindowDetected)) {
+                    statusIcon = "🪟";
+                }
+                // Verwarming aan
+                else if (this.config.showHeating && heatingPower > 0) {
+                    statusIcon = "🔥";
+                }
+                // Vorstbeveiliging
+                else if (this.config.showHeating && settingType === "HEATING_OFF") {
+                    statusIcon = "❄️";
                 }
 
+                // Debug log status icon
+                if (this.config.debug) {
+                    console.log(zone.name, "Status icon:", statusIcon);
+                }
+
+                // -----------------------
+                // Maak tabelcellen
+                // -----------------------
                 // 1️⃣ Room name
                 const tdName = document.createElement("td");
                 tdName.className = "tado-room";
