@@ -11,14 +11,14 @@ MagicMirror Tado
   disabled: false,
   config: {
     updateInterval: 1800000                     // 30 min - because of limitation free account,
-    showZones: ["Woonkamer", "Slaapkamer"],     // leave empty [] for all zones
+    showZones: [],     // [] = all zones, otherwise use zonename ["zone 1","zone 2"]
     showTemperature: true,
     showHeating: true,
     showOpenWindow: true,
     showColumnHeaders: true,                    // true = show Columns, false = hide columns
     zoneColumnName: "ZONE",
     tempColumnName: "TEMP (°C)",
-    humidityColumnName: "", // leeg voor geen titel
+    humidityColumnName: "",                     // empty for no title (default)
     statusColumnName: "STATUS"
   }
 },
