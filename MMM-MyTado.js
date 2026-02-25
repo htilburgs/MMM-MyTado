@@ -1,12 +1,10 @@
-/* MagicMirror Module: MMM-MyTado */
-
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 300000, // 5 minuten
+        updateInterval: 300000,
         showTemperature: true,
         showHeating: true,
         showOpenWindow: true,
-        showZones: [], // lege array = alle zones tonen
+        showZones: [],
         showHomeName: true,
         debug: false
     },
@@ -35,6 +33,8 @@ Module.register("MMM-MyTado", {
         }
 
         this.tadoData.forEach(home => {
+
+            // Home titel
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
@@ -46,84 +46,44 @@ Module.register("MMM-MyTado", {
             table.className = "tado-table";
 
             home.zones.forEach(zone => {
-
-                // -----------------------
-                // Debug log van zone data
-                // -----------------------
-                if (this.config.debug) {
-                    console.log("Zone data:", zone.state);
-                }
-
                 const row = document.createElement("tr");
 
-                const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
-                const target = zone.state.setting?.temperature?.celsius ?? "-";
-
-                // =====================
-                // STATUS CHECKS VEILIG
-                // =====================
-                let statusIcon = "–"; // fallback
-                const openWindowDetected = zone.state.openWindowDetected;
-                const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
-                const settingType = zone.state.setting?.type;
-
-                // Open raam (array of boolean)
-                if (this.config.showOpenWindow &&
-                    openWindowDetected &&
-                    ((Array.isArray(openWindowDetected) && openWindowDetected.length > 0) || 
-                     typeof openWindowDetected === "boolean" && openWindowDetected)) {
-                    statusIcon = "🪟";
-                }
-                // Verwarming aan
-                else if (this.config.showHeating && heatingPower > 0) {
-                    statusIcon = "🔥";
-                }
-                // Vorstbeveiliging
-                else if (this.config.showHeating && settingType === "HEATING_OFF") {
-                    statusIcon = "❄️";
-                }
-
-                // Debug log status icon
-                if (this.config.debug) {
-                    console.log(zone.name, "Status icon:", statusIcon);
-                }
-
-                // -----------------------
-                // Maak tabelcellen
-                // -----------------------
-                // 1️⃣ Room name
+                // 1️⃣ Zone name
                 const tdName = document.createElement("td");
                 tdName.className = "tado-room";
-                tdName.innerHTML = zone.name + ":";
+                tdName.innerHTML = `<strong>${zone.name}</strong>`;
                 row.appendChild(tdName);
 
-                // 2️⃣ Thermostaat icoon
-                const tdThermo = document.createElement("td");
-                tdThermo.className = "tado-thermo";
-                tdThermo.innerHTML = this.config.showTemperature ? "🌡️" : "";
-                row.appendChild(tdThermo);
+                // 2️⃣ Temperatuur
+                if (this.config.showTemperature) {
+                    const current = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
+                    const target = zone.state.setting?.temperature?.celsius ?? "-";
+                    const tdTemp = document.createElement("td");
+                    tdTemp.className = "tado-temp";
+                    tdTemp.innerHTML = `🌡 ${current}°C / ${target}°C`;
+                    row.appendChild(tdTemp);
+                }
 
-                // 3️⃣ Current temp
-                const tdCurrent = document.createElement("td");
-                tdCurrent.className = "tado-current";
-                tdCurrent.innerHTML = this.config.showTemperature ? `${current}°C` : "";
-                row.appendChild(tdCurrent);
-
-                // 4️⃣ Separator
-                const tdSep = document.createElement("td");
-                tdSep.className = "tado-separator";
-                tdSep.innerHTML = this.config.showTemperature ? "/" : "";
-                row.appendChild(tdSep);
-
-                // 5️⃣ Target temp
-                const tdTarget = document.createElement("td");
-                tdTarget.className = "tado-target";
-                tdTarget.innerHTML = this.config.showTemperature ? `${target}°C` : "";
-                row.appendChild(tdTarget);
-
-                // 6️⃣ Status icoon
+                // 3️⃣ Status icon
                 const tdStatus = document.createElement("td");
                 tdStatus.className = "tado-status";
+
+                let statusIcon = "";
+
+                const openWindowDetected = Array.isArray(zone.state.openWindowDetected)
+                    ? zone.state.openWindowDetected.length > 0
+                    : false;
+                const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
+                const heatingOff = zone.state.setting?.type === "HEATING_OFF";
+
+                if (this.config.showOpenWindow && openWindowDetected) {
+                    statusIcon += "🪟";
+                } else if (this.config.showHeating && heatingPower > 0) {
+                    statusIcon += "🔥";
+                } else if (this.config.showHeating && heatingOff) {
+                    statusIcon += "❄️";
+                }
+
                 tdStatus.innerHTML = statusIcon;
                 row.appendChild(tdStatus);
 
