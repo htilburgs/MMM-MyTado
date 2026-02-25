@@ -19,11 +19,10 @@ Module.register("MMM-MyTado", {
     },
 
     getCurrentTemperature: function(zone) {
-        // Alleen voor radiatoren / kamers
         if (zone.state.sensorDataPoints?.insideTemperature?.celsius != null) {
             return parseFloat(zone.state.sensorDataPoints.insideTemperature.celsius);
         }
-        return NaN; // Warm water gebruikt target als placeholder
+        return NaN;
     },
 
     getDom: function () {
@@ -87,19 +86,19 @@ Module.register("MMM-MyTado", {
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                // Temperatuur display
+                // Temperatuur display met graden-symbool
                 let tempDisplay = "-";
                 let tempColor = "";
 
                 if (isHotWaterZone && !isNaN(targetTempNum)) {
-                    tempDisplay = targetTempNum.toFixed(1);
+                    tempDisplay = targetTempNum.toFixed(1) + "°";
                     if (targetTempNum < 18) tempColor = "temp-cold";
                     else if (targetTempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
                 } else if (!isNaN(currentTempNum)) {
                     const currentTempStr = currentTempNum.toFixed(1);
                     const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
-                    tempDisplay = `${currentTempStr} / ${targetTempStr}`;
+                    tempDisplay = `${currentTempStr}° / ${targetTempStr === "OFF" ? "OFF" : targetTempStr + "°"}`;
                     if (currentTempNum < 18) tempColor = "temp-cold";
                     else if (currentTempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
