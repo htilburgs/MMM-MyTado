@@ -14,6 +14,10 @@ module.exports = NodeHelper.create({
     fetching: false,
     showZones: [],
 
+    cache: null,
+    cacheTimestamp: 0,
+    cacheTTL: 60 * 1000, // 60 seconden
+
     start: async function () {
         this.tadoClient = new Tado();
 
@@ -69,6 +73,13 @@ module.exports = NodeHelper.create({
     getData: async function () {
         if (!this.authenticated || this.fetching) return;
 
+        const now = Date.now();
+        if (this.cache && now - this.cacheTimestamp < this.cacheTTL) {
+            // Return cached data
+            this.sendSocketNotification("NEW_DATA", this.cache);
+            return;
+        }
+
         this.fetching = true;
         try {
             const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -103,15 +114,21 @@ module.exports = NodeHelper.create({
                         })
                     );
                     results.push(...batchResults.filter(r => r !== null));
-                    await delay(200);
+                    await delay(200); // korte pauze tussen batches
                 }
                 homeInfo.zones = results;
             }
 
-            this.sendSocketNotification("NEW_DATA", {
+            const data = {
                 tadoMe: this.tadoMe,
                 tadoHomes: this.tadoHomes
-            });
+            };
+
+            // 🔥 cache opslaan
+            this.cache = data;
+            this.cacheTimestamp = Date.now();
+
+            this.sendSocketNotification("NEW_DATA", data);
 
             console.log("MMM-Tado: Data sent to frontend.");
         } catch (err) {
