@@ -77,12 +77,12 @@ Module.register("MMM-MyTado", {
 
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Status icon: 🔥 verwarming, 🧊 vorstbeveiliging, 🪟 open raam
+                // Status icon: 🔥 verwarming, ❄️ vorstbeveiliging, 🪟 open raam
                 let statusIcons = "";
                 if (heatingPower > 0) {
                     statusIcons += "🔥";
                 } else if (frostProtection) {
-                    statusIcons += "🧊";
+                    statusIcons += "❄️";
                 }
                 if (windowOpen) {
                     statusIcons += "🪟";
