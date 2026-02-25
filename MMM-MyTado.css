@@ -27,4 +27,9 @@
     text-transform: uppercase;
 }
 
-.status-hotwater { color: #1e90ff; margin-left: 3px; } /* blauw, ietsje ruimte */
+/* .status-hotwater { color: #1e90ff; margin-left: 3px; } */
+
+.status-hotwater { 
+    color: #ff0000; /* rood */
+    margin-left: 3px; 
+}
