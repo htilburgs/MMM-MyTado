@@ -23,7 +23,7 @@ Module.register("MMM-MyTado", {
         if (zone.state.sensorDataPoints?.insideTemperature?.celsius != null) {
             return parseFloat(zone.state.sensorDataPoints.insideTemperature.celsius);
         }
-        return NaN; // Warm water krijgt target gebruikt
+        return NaN; // Warm water gebruikt target als placeholder
     },
 
     getDom: function () {
@@ -46,6 +46,7 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
+            // Table header
             const thead = document.createElement("thead");
             const headerRow = document.createElement("tr");
 
@@ -57,6 +58,11 @@ Module.register("MMM-MyTado", {
                 const tempHeader = document.createElement("th");
                 tempHeader.textContent = "TEMP (°C)".toUpperCase();
                 headerRow.appendChild(tempHeader);
+
+                // Nieuwe kolom voor vochtigheid
+                const humidityHeader = document.createElement("th");
+                humidityHeader.textContent = "VOCHTIGHEID (%)";
+                headerRow.appendChild(humidityHeader);
             }
 
             const statusHeader = document.createElement("th");
@@ -66,6 +72,7 @@ Module.register("MMM-MyTado", {
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
+            // Filter zones
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
@@ -99,17 +106,24 @@ Module.register("MMM-MyTado", {
                     else tempColor = "temp-hot";
                 }
 
+                // Vochtigheid
+                let humidityDisplay = "-";
+                const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
+                if (!isNaN(humidityNum)) {
+                    humidityDisplay = `${humidityNum.toFixed(0)}%`;
+                }
+
                 // Status iconen
                 let statusIcons = "";
                 if (heatingPower > 0) statusIcons += `<span class="status-heating">🔥</span>`;
                 else if (frostProtection) statusIcons += `<span class="status-frost">❄️</span>`;
                 if (windowOpen) statusIcons += `<span class="status-window">🪟</span>`;
-                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Warm water">💧</span>`;
+                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Warm water">🔴</span>`;
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td><strong>${zone.name}</strong></td>
-                    ${this.config.showTemperature ? `<td class="${tempColor}">${tempDisplay}</td>` : ""}
+                    ${this.config.showTemperature ? `<td class="${tempColor}">${tempDisplay}</td><td>${humidityDisplay}</td>` : ""}
                     <td>${statusIcons}</td>
                 `;
                 tbody.appendChild(row);
