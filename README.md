@@ -56,27 +56,31 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 
 
 ## Configuration Options
-<table width="100%">
-	<thead>
-		<tr>
-			<th>Option</th>
-			<th width="100%">Description</th>
-		</tr>
-	</thead>
-	<tbody>
-        <tr>
-            <td><code>updateInterval</code></td>
-            <td><b>Optional</b> - In milliseconds the update interval. Default: <code>1800000</code> 
-            (30 minutes). This value cannot be lower than <code>1800000</code> without a monthly subscription. </br>
-			Otherwise users get a <code>Tado block</code>.</br>
-			More info at https://help.tado.com/en/articles/12165739-limitation-for-rest-api-usage</td>
-        </tr>
-        <tr>
+| Option                | Description
+|:----------------------|:-------------
+| `updateInterval`		| **REQUIRED** - The interval the information is updated (in milliseconds)<br /><br />Default: `1800000`</br>This value cannot be lower than <code>1800000</code> without a monthly subscription. </br>Otherwise users get a <code>Tado block</code>.</br>More info at https://help.tado.com/en/articles/12165739-limitation-for-rest-api-usage
+| `showZones`			| 
+| `showTemperatue`		| 
+| `showHeating`			| 
+| `showOpenWindow`		| 
+| `showColumnHeaders`	| 
+| `zoneColumnName`		| 
+| ` tempColumnName` 	| 
+| ` humidityColumnName` | 
+| ` statusColumnName`   | 
+
+
             <td><code>showZones</code></td>
             <td>
 				TADO uses Zones. When you use <code>[]</code> all zones will be shown (default)</br>
 				You can also choose which zones you like to see, just fill in the zones <code>["Zone 1","Zone 2", etc]</code>
             </td>
+		</tr>
+		<tr>
+			<td><code>showTemperature</code></td>
+			<td>Default: **true</br>
+			Use this setting to enable / disable showing of Temperatures
+			</td>
         </tr>
 	</tbody>
 </table>
