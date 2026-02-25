@@ -2,8 +2,6 @@ Module.register("MMM-MyTado", {
     defaults: {
         updateInterval: 300000, // 5 min
         showTemperature: true,
-        showHeating: true,
-        showOpenWindow: true,
         showZones: [], // lege array = alle zones
         showHomeName: true // toon home naam
     },
@@ -30,7 +28,7 @@ Module.register("MMM-MyTado", {
         }
 
         this.tadoData.tadoHomes.forEach((home) => {
-            // Home titel
+            // Toon home titel
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
@@ -46,8 +44,7 @@ Module.register("MMM-MyTado", {
             const headerRow = document.createElement("tr");
             headerRow.innerHTML = `<th>Zone</th>
                                    ${this.config.showTemperature ? "<th>Temp (°C)</th>" : ""}
-                                   ${this.config.showHeating ? "<th>Heating</th>" : ""}
-                                   ${this.config.showOpenWindow ? "<th>Window</th>" : ""}`;
+                                   <th>Status</th>`;
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
@@ -60,15 +57,28 @@ Module.register("MMM-MyTado", {
             zonesToShow.forEach((zone) => {
                 const currentTemp = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
                 const targetTemp = zone.state.setting?.temperature?.celsius ?? "-";
-                const heatingOn = (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
+
+                const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
+                const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
+
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
+
+                // Status icon: 🔥 verwarming, 🧊 vorstbeveiliging, 🪟 open raam
+                let statusIcons = "";
+                if (heatingPower > 0) {
+                    statusIcons += "🔥";
+                } else if (frostProtection) {
+                    statusIcons += "🧊";
+                }
+                if (windowOpen) {
+                    statusIcons += "🪟";
+                }
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td><strong>${zone.name}</strong></td>
                     ${this.config.showTemperature ? `<td>${currentTemp} / ${targetTemp}</td>` : ""}
-                    ${this.config.showHeating ? `<td>${heatingOn ? "🔥" : "💤"}</td>` : ""}
-                    ${this.config.showOpenWindow ? `<td>${windowOpen ? "🪟" : ""}</td>` : ""}
+                    <td>${statusIcons}</td>
                 `;
                 tbody.appendChild(row);
             });
