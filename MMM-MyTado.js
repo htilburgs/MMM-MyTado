@@ -80,27 +80,12 @@ Module.register("MMM-MyTado", {
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                const isHotWaterZone = zone.type?.toLowerCase().includes("hotwater") || zone.name.toLowerCase().includes("warm water");
-
-                const currentTempNum = this.getCurrentTemperature(zone);
-                const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
-
-                // Temperatuur display met graden-symbool
-                let tempDisplay = "-";
-                let tempColor = "";
-
-                if (isHotWaterZone && !isNaN(targetTempNum)) {
-                    tempDisplay = targetTempNum.toFixed(1) + "°";
-                    if (targetTempNum < 18) tempColor = "temp-cold";
-                    else if (targetTempNum <= 22) tempColor = "temp-ok";
-                    else tempColor = "temp-hot";
-                } else if (!isNaN(currentTempNum)) {
-                    const currentTempStr = currentTempNum.toFixed(1);
-                    const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
-                    tempDisplay = `${currentTempStr}° / ${targetTempStr === "OFF" ? "OFF" : targetTempStr + "°"}`;
-                    if (currentTempNum < 18) tempColor = "temp-cold";
-                    else if (currentTempNum <= 22) tempColor = "temp-ok";
-                    else tempColor = "temp-hot";
+                // Status icon: 🔥 verwarming, ❄️ vorstbeveiliging, 🪟 open raam
+                let statusIcons = "";
+                if (heatingPower > 0) {
+                    statusIcons += "🔥";
+                } else if (frostProtection) {
+                    statusIcons += "❄️";
                 }
 
                 // Vochtigheid (niet tonen bij warmwaterzones)
