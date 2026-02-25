@@ -19,19 +19,20 @@ Module.register("MMM-MyTado", {
     },
 
     getCurrentTemperature: function(zone) {
-        // 1. hotWaterTemperature
-        if (zone.state.sensorDataPoints?.hotWaterTemperature != null) {
-            const val = zone.state.sensorDataPoints.hotWaterTemperature.celsius ?? zone.state.sensorDataPoints.hotWaterTemperature;
-            return parseFloat(val);
-        }
+        // Controleer alle mogelijke velden voor warmwaterzones
+        const keys = [
+            "hotWaterTemperature",
+            "hotWaterSensor",
+            "insideTemperature"
+        ];
 
-        // 2. insideTemperature (kamer / zone)
-        if (zone.state.sensorDataPoints?.insideTemperature != null) {
-            const val = zone.state.sensorDataPoints.insideTemperature.celsius ?? zone.state.sensorDataPoints.insideTemperature;
-            return parseFloat(val);
+        for (let key of keys) {
+            const val = zone.state.sensorDataPoints?.[key];
+            if (val != null) {
+                if (typeof val === "object" && val.celsius != null) return parseFloat(val.celsius);
+                if (!isNaN(parseFloat(val))) return parseFloat(val);
+            }
         }
-
-        // 3. fallback
         return NaN;
     },
 
@@ -87,7 +88,7 @@ Module.register("MMM-MyTado", {
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Huidige temperatuur
+                // Huidige temperatuur (veilig)
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
@@ -100,7 +101,7 @@ Module.register("MMM-MyTado", {
                     const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
                     tempDisplay = `${currentTempStr} / ${targetTempStr}`;
 
-                    // Temperatuurkleur
+                    // Temperatuurkleur op huidige temp
                     if (currentTempNum < 18) tempColor = "temp-cold";
                     else if (currentTempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
