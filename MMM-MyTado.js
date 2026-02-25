@@ -19,20 +19,17 @@ Module.register("MMM-MyTado", {
     },
 
     getCurrentTemperature: function(zone) {
-        // Controleer alle mogelijke velden voor warmwaterzones
-        const keys = [
-            "hotWaterTemperature",
-            "hotWaterSensor",
-            "insideTemperature"
-        ];
-
-        for (let key of keys) {
-            const val = zone.state.sensorDataPoints?.[key];
-            if (val != null) {
-                if (typeof val === "object" && val.celsius != null) return parseFloat(val.celsius);
-                if (!isNaN(parseFloat(val))) return parseFloat(val);
-            }
+        // Radiator / kamer: binnen temperatuur beschikbaar?
+        if (zone.state.sensorDataPoints?.insideTemperature?.celsius != null) {
+            return parseFloat(zone.state.sensorDataPoints.insideTemperature.celsius);
         }
+
+        // Warm water: geen actuele waarde, gebruik target als placeholder
+        if (zone.state.setting?.temperature?.celsius != null) {
+            return parseFloat(zone.state.setting.temperature.celsius);
+        }
+
+        // Anders fallback
         return NaN;
     },
 
@@ -88,7 +85,7 @@ Module.register("MMM-MyTado", {
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Huidige temperatuur (veilig)
+                // Huidige temperatuur of target als placeholder
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
@@ -101,7 +98,7 @@ Module.register("MMM-MyTado", {
                     const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
                     tempDisplay = `${currentTempStr} / ${targetTempStr}`;
 
-                    // Temperatuurkleur op huidige temp
+                    // Temperatuurkleur enkel gebaseerd op huidige temperatuur
                     if (currentTempNum < 18) tempColor = "temp-cold";
                     else if (currentTempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
