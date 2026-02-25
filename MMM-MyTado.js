@@ -70,18 +70,24 @@ Module.register("MMM-MyTado", {
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Temperatuur display en kleur
+                // Bepaal huidige temperatuur: hotWaterTemperature krijgt prioriteit
+                let currentTempNum = parseFloat(zone.state.sensorDataPoints?.insideTemperature?.celsius);
+                if (zone.state.sensorDataPoints?.hotWaterTemperature?.celsius != null) {
+                    currentTempNum = parseFloat(zone.state.sensorDataPoints.hotWaterTemperature.celsius);
+                }
+
+                const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
+
+                // Temperatuur display
                 let tempDisplay = "- / -";
                 let tempColor = "";
-
-                const currentTempNum = parseFloat(zone.state.sensorDataPoints?.insideTemperature?.celsius);
-                const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
                 if (!isNaN(currentTempNum)) {
                     const currentTempStr = currentTempNum.toFixed(1);
                     const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
                     tempDisplay = `${currentTempStr} / ${targetTempStr}`;
 
+                    // Temperatuurkleur op basis van huidige temperatuur
                     if (currentTempNum < 18) tempColor = "temp-cold";
                     else if (currentTempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
