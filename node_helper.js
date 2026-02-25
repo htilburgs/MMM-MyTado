@@ -28,10 +28,10 @@ module.exports = NodeHelper.create({
                 const tokenData = JSON.parse(data);
                 if (tokenData && tokenData.refresh_token) {
                     this.refreshToken = tokenData.refresh_token;
-                    console.log("MMM-Tado: Refresh token loaded.");
+                    console.log("MMM-MyTado: Refresh token loaded.");
                 }
             } catch (err) {
-                console.error("MMM-Tado: Error loading refresh token", err);
+                console.error("MMM-MyTado: Error loading refresh token", err);
             }
         }
 
@@ -41,9 +41,9 @@ module.exports = NodeHelper.create({
                 this.refreshToken = token.refresh_token;
                 try {
                     fs.writeFileSync(TOKEN_FILE, JSON.stringify(token), "utf8");
-                    console.log("MMM-Tado: Refresh token saved.");
+                    console.log("MMM-MyTado: Refresh token saved.");
                 } catch (err) {
-                    console.error("MMM-Tado: Error saving refresh token", err);
+                    console.error("MMM-MyTado: Error saving refresh token", err);
                 }
             }
         });
@@ -57,16 +57,16 @@ module.exports = NodeHelper.create({
                 await this.tadoClient.authenticate(this.refreshToken);
 
             if (verify) {
-                console.log("MMM-Tado: Device authentication required.");
+                console.log("MMM-MyTado: Device authentication required.");
                 console.log("Open deze URL om te autoriseren:");
                 console.log(verify.verification_uri_complete);
             }
 
             await futureToken;
             this.authenticated = true;
-            console.log("MMM-Tado: Successfully authenticated.");
+            console.log("MMM-MyTado: Successfully authenticated.");
         } catch (err) {
-            console.error("MMM-Tado: Authentication failed:", err);
+            console.error("MMM-MyTado: Authentication failed:", err);
         }
     },
 
@@ -108,7 +108,7 @@ module.exports = NodeHelper.create({
                                 const state = await this.tadoClient.getZoneState(home.id, zone.id);
                                 return { id: zone.id, name: zone.name, type: zone.type, state };
                             } catch (err) {
-                                console.error(`MMM-Tado: Failed fetching zone ${zone.name}`, err);
+                                console.error(`MMM-MyTado: Failed fetching zone ${zone.name}`, err);
                                 return null;
                             }
                         })
@@ -130,9 +130,9 @@ module.exports = NodeHelper.create({
 
             this.sendSocketNotification("NEW_DATA", data);
 
-            console.log("MMM-Tado: Data sent to frontend.");
+            console.log("MMM-MyTado: Data sent to frontend.");
         } catch (err) {
-            console.error("MMM-Tado: Error in getData:", err);
+            console.error("MMM-MyTado: Error in getData:", err);
         } finally {
             this.fetching = false;
         }
