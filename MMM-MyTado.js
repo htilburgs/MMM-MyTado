@@ -1,9 +1,9 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 300000, // 5 min
+        updateInterval: 300000,
         showTemperature: true,
-        showZones: [], // lege array = alle zones
-        showHomeName: true // toon home naam
+        showZones: [],
+        showHomeName: true
     },
 
     start: function () {
@@ -19,17 +19,12 @@ Module.register("MMM-MyTado", {
     },
 
     getCurrentTemperature: function(zone) {
-        // Radiator / kamer: binnen temperatuur beschikbaar?
         if (zone.state.sensorDataPoints?.insideTemperature?.celsius != null) {
             return parseFloat(zone.state.sensorDataPoints.insideTemperature.celsius);
         }
-
-        // Warm water: geen actuele waarde, gebruik target als placeholder
         if (zone.state.setting?.temperature?.celsius != null) {
             return parseFloat(zone.state.setting.temperature.celsius);
         }
-
-        // Anders fallback
         return NaN;
     },
 
@@ -53,7 +48,6 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Table header
             const thead = document.createElement("thead");
             const headerRow = document.createElement("tr");
 
@@ -74,7 +68,6 @@ Module.register("MMM-MyTado", {
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
-            // Filter zones
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
@@ -85,11 +78,12 @@ Module.register("MMM-MyTado", {
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Huidige temperatuur of target als placeholder
+                // Detecteer warm water zones
+                const isHotWaterZone = zone.type?.toLowerCase().includes("hotwater") || zone.name.toLowerCase().includes("warm water");
+
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                // Temperatuur display
                 let tempDisplay = "- / -";
                 let tempColor = "";
 
@@ -98,17 +92,18 @@ Module.register("MMM-MyTado", {
                     const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
                     tempDisplay = `${currentTempStr} / ${targetTempStr}`;
 
-                    // Temperatuurkleur enkel gebaseerd op huidige temperatuur
                     if (currentTempNum < 18) tempColor = "temp-cold";
                     else if (currentTempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
                 }
 
-                // Status iconen
                 let statusIcons = "";
                 if (heatingPower > 0) statusIcons += `<span class="status-heating">🔥</span>`;
                 else if (frostProtection) statusIcons += `<span class="status-frost">❄️</span>`;
                 if (windowOpen) statusIcons += `<span class="status-window">🪟</span>`;
+
+                // Voeg warmwater-icoon toe
+                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Warm water">💧</span>`;
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
