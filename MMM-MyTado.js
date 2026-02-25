@@ -74,14 +74,15 @@ Module.register("MMM-MyTado", {
                 // Status icons met kleur
                 let statusIcons = "";
                 if (heatingPower > 0) statusIcons += `<span class="status-heating">🔥</span>`;
-                else if (frostProtection) statusIcons += `<span class="status-frost">🧊</span>`;
+                else if (frostProtection) statusIcons += `<span class="status-frost">❄️</span>`;
                 if (windowOpen) statusIcons += `<span class="status-window">🪟</span>`;
 
-                // Temperatuur kleur
+                // Temperatuur kleur via parseFloat
                 let tempColor = "";
-                if (typeof currentTemp === "number") {
-                    if (currentTemp < 18) tempColor = "temp-cold";
-                    else if (currentTemp <= 22) tempColor = "temp-ok";
+                const tempNum = parseFloat(currentTemp);
+                if (!isNaN(tempNum)) {
+                    if (tempNum < 18) tempColor = "temp-cold";
+                    else if (tempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
                 }
 
