@@ -19,13 +19,11 @@ Module.register("MMM-MyTado", {
     },
 
     getCurrentTemperature: function(zone) {
+        // Alleen relevant voor radiatoren / zones
         if (zone.state.sensorDataPoints?.insideTemperature?.celsius != null) {
             return parseFloat(zone.state.sensorDataPoints.insideTemperature.celsius);
         }
-        if (zone.state.setting?.temperature?.celsius != null) {
-            return parseFloat(zone.state.setting.temperature.celsius);
-        }
-        return NaN;
+        return NaN; // Warm water krijgt target gebruikt
     },
 
     getDom: function () {
@@ -78,31 +76,34 @@ Module.register("MMM-MyTado", {
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Detecteer warm water zones
                 const isHotWaterZone = zone.type?.toLowerCase().includes("hotwater") || zone.name.toLowerCase().includes("warm water");
 
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                let tempDisplay = "- / -";
+                // Temperatuur display
+                let tempDisplay = "-";
                 let tempColor = "";
 
-                if (!isNaN(currentTempNum)) {
+                if (isHotWaterZone && !isNaN(targetTempNum)) {
+                    tempDisplay = targetTempNum.toFixed(1);
+                    if (targetTempNum < 18) tempColor = "temp-cold";
+                    else if (targetTempNum <= 22) tempColor = "temp-ok";
+                    else tempColor = "temp-hot";
+                } else if (!isNaN(currentTempNum)) {
                     const currentTempStr = currentTempNum.toFixed(1);
                     const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
                     tempDisplay = `${currentTempStr} / ${targetTempStr}`;
-
                     if (currentTempNum < 18) tempColor = "temp-cold";
                     else if (currentTempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
                 }
 
+                // Status iconen
                 let statusIcons = "";
                 if (heatingPower > 0) statusIcons += `<span class="status-heating">🔥</span>`;
                 else if (frostProtection) statusIcons += `<span class="status-frost">❄️</span>`;
                 if (windowOpen) statusIcons += `<span class="status-window">🪟</span>`;
-
-                // Voeg warmwater-icoon toe
                 if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Warm water">💧</span>`;
 
                 const row = document.createElement("tr");
