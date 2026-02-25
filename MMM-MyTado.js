@@ -1,15 +1,15 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 300000,
+        updateInterval: 1800000,          // 30 minutes because of limitations free version Tado api
         showTemperature: true,
-        showZones: [],
-        showHomeName: true,
+        showZones: [],                    // [] = all zones, otherwise use zonename ["zone 1","zone 2"]
+        showHomeName: true,               // Show Home name
 
-        // Kolomnamen variabelen
-        showColumnHeaders: true, // true = toon kolomnamen, false = verberg ze
+        // Column name variables
+        showColumnHeaders: true,          // true = show column headers, false = hide
         zoneColumnName: "ZONE",
         tempColumnName: "TEMP (°C)",
-        humidityColumnName: "", // leeg voor geen titel
+        humidityColumnName: "",          // empty for no title (default)
         statusColumnName: "STATUS"
     },
 
@@ -37,7 +37,7 @@ Module.register("MMM-MyTado", {
         wrapper.className = "tado-wrapper";
 
         if (!this.tadoData) {
-            wrapper.innerHTML = "Tado data loading...";
+            wrapper.innerHTML = "Loading Tado data...";
             return wrapper;
         }
 
@@ -52,7 +52,7 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Kolomkoppen
+            // Column headers
             if (this.config.showColumnHeaders) {
                 const thead = document.createElement("thead");
                 const headerRow = document.createElement("tr");
@@ -94,7 +94,7 @@ Module.register("MMM-MyTado", {
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                // Temperatuur display met °
+                // Temperature display with degrees symbol
                 let tempDisplay = "-";
                 let tempColor = "";
 
@@ -112,7 +112,7 @@ Module.register("MMM-MyTado", {
                     else tempColor = "temp-hot";
                 }
 
-                // Vochtigheid (niet tonen bij warmwaterzones)
+                // Humidity (do not show for hot water zones)
                 let humidityDisplay = "";
                 if (!isHotWaterZone) {
                     const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
@@ -123,12 +123,12 @@ Module.register("MMM-MyTado", {
                     }
                 }
 
-                // Status iconen
+                // Status icons
                 let statusIcons = "";
-                if (heatingPower > 0) statusIcons += `<span class="status-heating">🔥</span>`;
-                else if (frostProtection) statusIcons += `<span class="status-frost">❄️</span>`;
-                if (windowOpen) statusIcons += `<span class="status-window">🪟</span>`;
-                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Warm water">💧</span>`;
+                if (heatingPower > 0) statusIcons += `<span class="status-heating" title="Heating">🔥</span>`;
+                else if (frostProtection) statusIcons += `<span class="status-frost" title="Frost Protection">❄️</span>`;
+                if (windowOpen) statusIcons += `<span class="status-window" title="Open Window">🪟</span>`;
+                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Hot Water">💧</span>`;
 
                 const row = document.createElement("tr");
                 row.innerHTML = `

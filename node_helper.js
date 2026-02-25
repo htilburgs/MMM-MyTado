@@ -16,7 +16,7 @@ module.exports = NodeHelper.create({
 
     cache: null,
     cacheTimestamp: 0,
-    cacheTTL: 60 * 1000, // 60 seconden
+    cacheTTL: 60 * 1000, // 60 seconds
 
     start: async function () {
         this.tadoClient = new Tado();
@@ -58,7 +58,7 @@ module.exports = NodeHelper.create({
 
             if (verify) {
                 console.log("MMM-MyTado: Device authentication required.");
-                console.log("Open deze URL om te autoriseren:");
+                console.log("Open this URL to authenticate:");
                 console.log(verify.verification_uri_complete);
             }
 
@@ -93,7 +93,7 @@ module.exports = NodeHelper.create({
 
                 const zones = await this.tadoClient.getZones(home.id);
 
-                // Filter zones op showZones
+                // Filter zones on showZones
                 const zonesToFetch = this.showZones.length > 0
                     ? zones.filter(z => this.showZones.includes(z.name))
                     : zones;
@@ -114,7 +114,7 @@ module.exports = NodeHelper.create({
                         })
                     );
                     results.push(...batchResults.filter(r => r !== null));
-                    await delay(200); // korte pauze tussen batches
+                    await delay(200); // short break between batches
                 }
                 homeInfo.zones = results;
             }
