@@ -74,18 +74,17 @@ Module.register("MMM-MyTado", {
                 let tempDisplay = "- / -";
                 let tempColor = "";
 
-                if (frostProtection) {
-                    tempDisplay = "OFF / OFF";
-                } else {
-                    const currentTemp = parseFloat(zone.state.sensorDataPoints?.insideTemperature?.celsius);
-                    const targetTemp = parseFloat(zone.state.setting?.temperature?.celsius);
+                const currentTempNum = parseFloat(zone.state.sensorDataPoints?.insideTemperature?.celsius);
+                const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                    if (!isNaN(currentTemp) && !isNaN(targetTemp)) {
-                        tempDisplay = `${currentTemp.toFixed(1)} / ${targetTemp.toFixed(1)}`;
-                        if (currentTemp < 18) tempColor = "temp-cold";
-                        else if (currentTemp <= 22) tempColor = "temp-ok";
-                        else tempColor = "temp-hot";
-                    }
+                if (!isNaN(currentTempNum)) {
+                    const currentTempStr = currentTempNum.toFixed(1);
+                    const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
+                    tempDisplay = `${currentTempStr} / ${targetTempStr}`;
+
+                    if (currentTempNum < 18) tempColor = "temp-cold";
+                    else if (currentTempNum <= 22) tempColor = "temp-ok";
+                    else tempColor = "temp-hot";
                 }
 
                 // Status iconen
