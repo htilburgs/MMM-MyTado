@@ -28,7 +28,6 @@ Module.register("MMM-MyTado", {
         }
 
         this.tadoData.tadoHomes.forEach((home) => {
-            // Toon home titel
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
@@ -67,28 +66,29 @@ Module.register("MMM-MyTado", {
 
             const tbody = document.createElement("tbody");
             zonesToShow.forEach((zone) => {
-                const currentTempRaw = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
-                const targetTempRaw = zone.state.setting?.temperature?.celsius ?? "-";
-
-                // Zorg voor parseFloat
-                const currentTemp = parseFloat(currentTempRaw);
-                const targetTemp = parseFloat(targetTempRaw);
-
-                let tempColor = "";
-                let tempDisplay = "- / -";
-
-                if (!isNaN(currentTemp) && !isNaN(targetTemp)) {
-                    tempDisplay = `${currentTemp.toFixed(1)} / ${targetTemp.toFixed(1)}`;
-                    if (currentTemp < 18) tempColor = "temp-cold";
-                    else if (currentTemp <= 22) tempColor = "temp-ok";
-                    else tempColor = "temp-hot";
-                }
-
                 const heatingPower = zone.state.activityDataPoints?.heatingPower?.percentage ?? 0;
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Status iconen met kleur
+                // Temperatuur display en kleur
+                let tempDisplay = "- / -";
+                let tempColor = "";
+
+                if (frostProtection) {
+                    tempDisplay = "OFF / OFF";
+                } else {
+                    const currentTemp = parseFloat(zone.state.sensorDataPoints?.insideTemperature?.celsius);
+                    const targetTemp = parseFloat(zone.state.setting?.temperature?.celsius);
+
+                    if (!isNaN(currentTemp) && !isNaN(targetTemp)) {
+                        tempDisplay = `${currentTemp.toFixed(1)} / ${targetTemp.toFixed(1)}`;
+                        if (currentTemp < 18) tempColor = "temp-cold";
+                        else if (currentTemp <= 22) tempColor = "temp-ok";
+                        else tempColor = "temp-hot";
+                    }
+                }
+
+                // Status iconen
                 let statusIcons = "";
                 if (heatingPower > 0) statusIcons += `<span class="status-heating">🔥</span>`;
                 else if (frostProtection) statusIcons += `<span class="status-frost">❄️</span>`;
