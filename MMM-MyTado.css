@@ -20,6 +20,7 @@
     border: 1px solid #ddd;
     padding: 8px;
     text-align: center;
+    vertical-align: middle;
 }
 
 .tado-table th {
@@ -27,9 +28,13 @@
     text-transform: uppercase;
 }
 
-/* .status-hotwater { color: #1e90ff; margin-left: 3px; } */
+/* Temperatuur kleuren */
+.temp-cold { color: #1e90ff; }
+.temp-ok { color: #28a745; }
+.temp-hot { color: #ff4500; }
 
-.status-hotwater { 
-    color: #ff0000; /* rood */
-    margin-left: 3px; 
-}
+/* Status icon kleuren */
+.status-heating { color: #ff0000; }
+.status-frost { color: #1e90ff; }
+.status-window { color: #00bfff; }
+.status-hotwater { color: #ff0000; margin-left: 3px; } /* warm water */
