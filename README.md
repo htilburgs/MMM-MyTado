@@ -66,14 +66,16 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 	<tbody>
         <tr>
             <td><code>updateInterval</code></td>
-            <td><b>Optional</b> - In milliseconds the update interval. Default: <code>300000</code> 
-            (5 minutes). This value cannot be lower than <code>300000</code>. Otherwise users get a
-             <code>Tado block</code>.</td>
+            <td><b>Optional</b> - In milliseconds the update interval. Default: <code>1800000</code> 
+            (30 minutes). This value cannot be lower than <code>1800000</code> without a monthly subscription. </br>
+			Otherwise users get a <code>Tado block</code>.</br>
+			More info at https://help.tado.com/en/articles/12165739-limitation-for-rest-api-usage</td>
         </tr>
         <tr>
-            <td><code>units</code></td>
+            <td><code>showZones</code></td>
             <td>
-                What units to use. This property can be set in the general configuration settings. See the <a href="https://docs.magicmirror.builders/getting-started/configuration.html#general">MagicMirror Documentation</a> for more information.
+				TADO uses Zones. When you use <code>[]</code> all zones will be shown (default)</br>
+				You can also choose which zones you like to see, just fill in the zones <code>["Zone 1","Zone 2", etc]</code>
             </td>
         </tr>
 	</tbody>
