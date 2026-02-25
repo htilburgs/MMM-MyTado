@@ -27,12 +27,4 @@
     text-transform: uppercase;
 }
 
-/* Temperatuur kleuren */
-.temp-cold { color: #1e90ff; }   /* blauw */
-.temp-ok { color: #28a745; }     /* groen */
-.temp-hot { color: #ff4500; }    /* rood */
-
-/* Status icon kleuren */
-.status-heating { color: #ff0000; }     /* rood */
-.status-frost { color: #1e90ff; }       /* blauw */
-.status-window { color: #00bfff; }      /* lichtblauw */
+.status-hotwater { color: #1e90ff; margin-left: 3px; } /* blauw, ietsje ruimte */
