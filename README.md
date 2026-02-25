@@ -41,5 +41,37 @@ Add the module to your modules array in your config.js.
   }
 },
 ```
+## Configuration Options
+<table width="100%">
+	<thead>
+		<tr>
+			<th>Option</th>
+			<th width="100%">Description</th>
+		</tr>
+	</thead>
+	<tbody>
+        <tr>
+			<td><code>username</code></td>
+			<td><b>Required</b> - Your Tado username.</td>
+		</tr>
+        <tr>
+			<td><code>password</code></td>
+			<td><b>Required</b> - Your Tado password.</td>
+		</tr>
+        <tr>
+            <td><code>updateInterval</code></td>
+            <td><b>Optional</b> - In milliseconds the update interval. Default: <code>300000</code> 
+            (5 minutes). This value cannot be lower than <code>300000</code>. Otherwise users get a
+             <code>Tado block</code>.</td>
+        </tr>
+        <tr>
+            <td><code>units</code></td>
+            <td>
+                What units to use. This property can be set in the general configuration settings. See the <a href="https://docs.magicmirror.builders/getting-started/configuration.html#general">MagicMirror Documentation</a> for more information.
+            </td>
+        </tr>
+	</tbody>
+</table>
+
 ## Versions
 v1.0.0 - Initial release
