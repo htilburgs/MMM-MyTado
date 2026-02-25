@@ -28,7 +28,9 @@ Add the module to your modules array in your config.js.
   header: "TADO Thermostaat",
   disabled: false,
   config: {
-    updateInterval: 1800000              // 30 min - because of limitation free account,
+	e-mail: "your email address",
+	password: "your password",
+	updateInterval: 1800000              // 30 min - because of limitation free account,
     showZones: [],                       // [] = all zones, otherwise use zonename ["zone 1","zone 2"]
     showTemperature: true,
     showHeating: true,
