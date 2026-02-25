@@ -3,7 +3,14 @@ Module.register("MMM-MyTado", {
         updateInterval: 300000,
         showTemperature: true,
         showZones: [],
-        showHomeName: true
+        showHomeName: true,
+
+        // Kolomnamen variabelen
+        showColumnHeaders: true, // true = toon kolomnamen, false = verberg ze
+        zoneColumnName: "ZONE",
+        tempColumnName: "TEMP (°C)",
+        humidityColumnName: "", // leeg voor geen titel
+        statusColumnName: "STATUS"
     },
 
     start: function () {
@@ -45,30 +52,32 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            const thead = document.createElement("thead");
-            const headerRow = document.createElement("tr");
+            // Kolomkoppen
+            if (this.config.showColumnHeaders) {
+                const thead = document.createElement("thead");
+                const headerRow = document.createElement("tr");
 
-            const zoneHeader = document.createElement("th");
-            zoneHeader.textContent = "ZONE".toUpperCase();
-            headerRow.appendChild(zoneHeader);
+                const zoneHeader = document.createElement("th");
+                zoneHeader.textContent = this.config.zoneColumnName.toUpperCase();
+                headerRow.appendChild(zoneHeader);
 
-            if (this.config.showTemperature) {
-                const tempHeader = document.createElement("th");
-                tempHeader.textContent = "TEMP (°C)".toUpperCase();
-                headerRow.appendChild(tempHeader);
+                if (this.config.showTemperature) {
+                    const tempHeader = document.createElement("th");
+                    tempHeader.textContent = this.config.tempColumnName.toUpperCase();
+                    headerRow.appendChild(tempHeader);
 
-                // Extra kolom voor vochtigheid, zonder titel
-                const humidityHeader = document.createElement("th");
-                humidityHeader.textContent = "";
-                headerRow.appendChild(humidityHeader);
+                    const humidityHeader = document.createElement("th");
+                    humidityHeader.textContent = this.config.humidityColumnName;
+                    headerRow.appendChild(humidityHeader);
+                }
+
+                const statusHeader = document.createElement("th");
+                statusHeader.textContent = this.config.statusColumnName.toUpperCase();
+                headerRow.appendChild(statusHeader);
+
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
             }
-
-            const statusHeader = document.createElement("th");
-            statusHeader.textContent = "STATUS".toUpperCase();
-            headerRow.appendChild(statusHeader);
-
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
 
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
@@ -80,12 +89,27 @@ Module.register("MMM-MyTado", {
                 const frostProtection = zone.state.setting?.power === "OFF" && heatingPower === 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                // Status icon: 🔥 verwarming, ❄️ vorstbeveiliging, 🪟 open raam
-                let statusIcons = "";
-                if (heatingPower > 0) {
-                    statusIcons += "🔥";
-                } else if (frostProtection) {
-                    statusIcons += "❄️";
+                const isHotWaterZone = zone.type?.toLowerCase().includes("hotwater") || zone.name.toLowerCase().includes("warm water");
+
+                const currentTempNum = this.getCurrentTemperature(zone);
+                const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
+
+                // Temperatuur display met °
+                let tempDisplay = "-";
+                let tempColor = "";
+
+                if (isHotWaterZone && !isNaN(targetTempNum)) {
+                    tempDisplay = targetTempNum.toFixed(1) + "°";
+                    if (targetTempNum < 18) tempColor = "temp-cold";
+                    else if (targetTempNum <= 22) tempColor = "temp-ok";
+                    else tempColor = "temp-hot";
+                } else if (!isNaN(currentTempNum)) {
+                    const currentTempStr = currentTempNum.toFixed(1);
+                    const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
+                    tempDisplay = `${currentTempStr}° / ${targetTempStr === "OFF" ? "OFF" : targetTempStr + "°"}`;
+                    if (currentTempNum < 18) tempColor = "temp-cold";
+                    else if (currentTempNum <= 22) tempColor = "temp-ok";
+                    else tempColor = "temp-hot";
                 }
 
                 // Vochtigheid (niet tonen bij warmwaterzones)
