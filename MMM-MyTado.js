@@ -19,11 +19,10 @@ Module.register("MMM-MyTado", {
     },
 
     getCurrentTemperature: function(zone) {
-        // Alleen relevant voor radiatoren / zones
         if (zone.state.sensorDataPoints?.insideTemperature?.celsius != null) {
             return parseFloat(zone.state.sensorDataPoints.insideTemperature.celsius);
         }
-        return NaN; // Warm water gebruikt target als placeholder
+        return NaN;
     },
 
     getDom: function () {
@@ -46,7 +45,6 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Table header
             const thead = document.createElement("thead");
             const headerRow = document.createElement("tr");
 
@@ -59,9 +57,9 @@ Module.register("MMM-MyTado", {
                 tempHeader.textContent = "TEMP (°C)".toUpperCase();
                 headerRow.appendChild(tempHeader);
 
-                // Nieuwe kolom voor vochtigheid
+                // Extra kolom voor vochtigheid, maar geen titel
                 const humidityHeader = document.createElement("th");
-                humidityHeader.textContent = "VOCHTIGHEID (%)";
+                humidityHeader.textContent = ""; 
                 headerRow.appendChild(humidityHeader);
             }
 
@@ -72,7 +70,6 @@ Module.register("MMM-MyTado", {
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
-            // Filter zones
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
@@ -118,7 +115,7 @@ Module.register("MMM-MyTado", {
                 if (heatingPower > 0) statusIcons += `<span class="status-heating">🔥</span>`;
                 else if (frostProtection) statusIcons += `<span class="status-frost">❄️</span>`;
                 if (windowOpen) statusIcons += `<span class="status-window">🪟</span>`;
-                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Warm water">🔴</span>`;
+                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Warm water">💧</span>`;
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
