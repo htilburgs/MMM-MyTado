@@ -29,48 +29,54 @@ Module.register("MMM-MyTado", {
             return wrapper;
         }
 
-        const columns = document.createElement("div");
-        columns.className = "tado-columns";
-
         this.tadoData.tadoHomes.forEach((home) => {
-            const homeCol = document.createElement("div");
-            homeCol.className = "tado-column";
-
-            // Toon home naam
+            // Home titel
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
                 homeTitle.textContent = home.name;
-                homeCol.appendChild(homeTitle);
+                wrapper.appendChild(homeTitle);
             }
+
+            const table = document.createElement("table");
+            table.className = "tado-table";
+
+            // Table header
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+            headerRow.innerHTML = `<th>Zone</th>
+                                   ${this.config.showTemperature ? "<th>Temp (°C)</th>" : ""}
+                                   ${this.config.showHeating ? "<th>Heating</th>" : ""}
+                                   ${this.config.showOpenWindow ? "<th>Window</th>" : ""}`;
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
 
             // Filter zones
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
 
+            const tbody = document.createElement("tbody");
             zonesToShow.forEach((zone) => {
-                const zoneDiv = document.createElement("div");
-                zoneDiv.className = "tado-zone";
-
                 const currentTemp = zone.state.sensorDataPoints?.insideTemperature?.celsius ?? "-";
                 const targetTemp = zone.state.setting?.temperature?.celsius ?? "-";
                 const heatingOn = (zone.state.activityDataPoints?.heatingPower?.percentage ?? 0) > 0;
                 const windowOpen = zone.state.openWindowDetected?.length > 0;
 
-                zoneDiv.innerHTML = `
-                    <strong>${zone.name}</strong>:
-                    ${this.config.showTemperature ? `🌡 ${currentTemp}°C / ${targetTemp}°C ` : ""}
-                    ${this.config.showHeating ? (heatingOn ? "🔥" : "💤") : ""}
-                    ${this.config.showOpenWindow && windowOpen ? "🪟" : ""}
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td><strong>${zone.name}</strong></td>
+                    ${this.config.showTemperature ? `<td>${currentTemp} / ${targetTemp}</td>` : ""}
+                    ${this.config.showHeating ? `<td>${heatingOn ? "🔥" : "💤"}</td>` : ""}
+                    ${this.config.showOpenWindow ? `<td>${windowOpen ? "🪟" : ""}</td>` : ""}
                 `;
-                homeCol.appendChild(zoneDiv);
+                tbody.appendChild(row);
             });
 
-            columns.appendChild(homeCol);
+            table.appendChild(tbody);
+            wrapper.appendChild(table);
         });
 
-        wrapper.appendChild(columns);
         return wrapper;
     }
 });
