@@ -13,6 +13,10 @@ Module.register("MMM-MyTado", {
         statusColumnName: "STATUS"
     },
 
+    getStyles: function () {
+        return ["MMM-MyTado.css"];
+    },
+
     start: function () {
         this.tadoData = null;
         this.sendSocketNotification("CONFIG", this.config);
