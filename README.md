@@ -69,20 +69,19 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 ## Configuration Options
 | Option                | Description
 |:----------------------|:-------------
-| `updateInterval`		| **REQUIRED** - The interval the information is updated (in milliseconds)<br /><br />Default: `1800000`</br>This value cannot be lower than <code>1800000</code> without a monthly subscription. </br>Otherwise users get a <code>Tado block</code>.</br>More info at https://help.tado.com/en/articles/12165739-limitation-for-rest-api-usage
-| `showZones`			| TADO uses Zones. When you use <code>[]</code> all zones will be shown (default)</br>You can also choose which zones you like to see, just fill in the zones <code>["Zone 1","Zone 2", etc]</code>
-| `showTemperature`		| 
-| `showHeating`			| 
-| `showOpenWindow`		| 
-| `showColumnHeaders`	| 
-| `zoneColumnName`		| 
-| `tempColumnName` 		| 
-| `humidityColumnName` 	| 
-| `statusColumnName`   	| 
+| `updateInterval`		| **REQUIRED** - The interval the information is updated (in milliseconds)<br /><br />Default: `1800000`</br>This value cannot be lower than `1800000` without a monthly subscription. </br>Otherwise users get a `Tado block`.</br></br>More info at https://help.tado.com/en/articles/12165739-limitation-for-rest-api-usage
+| `showZones`			| TADO uses Zones. When you use <code>[]</code> all zones will be shown (default)</br>You can also choose which zones you like to see, just fill in the zones `["Zone 1","Zone 2", etc]`
+| `showHomeName`		| Show the Home name as defined in the Tapo environment</br>Default: <b>`true`</b>
+| `showColumnHeaders`	| Show the Column Headers</br>Default: <b>`true`</b>
+| `useColors`			| Use Colors for the Temperature Column </br>Default: <b>`false`</b>
+| `zoneColumnName`		| Custom Zone Column Name - default: <b>`ZONE`</b>
+| `tempColumnName` 		| Custom Temperature Column Name - default: <b>`TEMP (°C)`</b>
+| `humidityColumnName` 	| Custom Humidity Column Name - default: <b>`Empty`</b> (Column Name is not shown)
+| `statusColumnName`   	| Custom Status Column Name - default: <b>`STATUS`</b>
 
 ## Versions
 v1.0.0 - Initial release
 
 ## Credits
-This module is inspired by the [MMM-Tado module](https://github.com/WouterEekhout/MMM-Tado) </br>
+This module is inspired by the [MMM-Tado module from WouterEekhout](https://github.com/WouterEekhout/MMM-Tado) </br>
 Using the NPM package [node-tado-client](https://github.com/mattdavis90/node-tado-client)
