@@ -134,7 +134,7 @@ Module.register("MMM-MyTado", {
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td><strong>${zone.name}</strong></td>
+                    <td class="tado-zone">${zone.name}</td>
                     ${this.config.showTemperature ? `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td><td>${humidityDisplay}</td>` : ""}
                     <td>${statusIcons}</td>
                 `;
