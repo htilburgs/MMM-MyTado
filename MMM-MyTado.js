@@ -69,7 +69,7 @@ Module.register("MMM-MyTado", {
 
                 // Empty spacer column
                 const spacerHeader = document.createElement("th");
-                spacerHeader.textContent = "";
+                spacerHeader.textContent = " - ";
                 headerRow.appendChild(spacerHeader);
 
                 const humidityHeader = document.createElement("th");
