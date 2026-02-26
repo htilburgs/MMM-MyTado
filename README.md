@@ -5,8 +5,10 @@ I like the idea and built a version with a modern look and feel.
 
 ### The module displays the following information:
 
-* A symbol (🔥) to show if the heater is currently active.
+* The Hone name (🏠)
+* The Zone names
 * The current temperature and the target temperature
+* A symbol (🔥) to show if the heater is currently active.
 * The humidity (💦)
 * The hot water temperature (🩸)
 * Frost Protection (❄️)
