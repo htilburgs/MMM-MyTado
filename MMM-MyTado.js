@@ -138,7 +138,7 @@ Module.register("MMM-MyTado", {
                 // Create table row with empty spacer column
                 const row = document.createElement("tr");
                 const tempCell = `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>`;
-                const spacerCell = `<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>`;
+                const spacerCell = `<td>&nbsp;&nbsp;&nbsp;</td>`;
                 const humidityCell = `<td style="text-align: right;">${humidityDisplay}</td>`;
 
                 row.innerHTML = `
