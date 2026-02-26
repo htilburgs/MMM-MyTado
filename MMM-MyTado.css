@@ -28,7 +28,7 @@
 
 /* Humidity column - right aligned */
 .tado-table td.tado-humidity {
-    text-align: right;
+    text-align: right !important;
 }
 
 /* Temperature colors */
