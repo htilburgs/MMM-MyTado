@@ -1,16 +1,15 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 1800000,          // 30 minutes because of limitations free version Tado api
+        updateInterval: 1800000,          // 30 minuten (free Tado API)
         showTemperature: true,
-        showZones: [],                    // [] = all zones, otherwise use zonename ["zone 1","zone 2"]
-        showHomeName: true,               // Show Home name
-
-        // Column name variables
-        showColumnHeaders: true,          // true = show column headers, false = hide
+        showZones: [],                    // [] = alle zones, anders ["zone 1","zone 2"]
+        showHomeName: true,               // Toon home-naam
+        showColumnHeaders: true,          // Toon kolomkoppen
         zoneColumnName: "ZONE",
         tempColumnName: "TEMP (°C)",
-        humidityColumnName: "",          // empty for no title (default)
-        statusColumnName: "STATUS"
+        humidityColumnName: "",           // lege string = geen titel
+        statusColumnName: "STATUS",
+        useColors: true                   // true = temp kleuren aan, false = uit
     },
 
     getStyles: function () {
@@ -49,7 +48,6 @@ Module.register("MMM-MyTado", {
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
-               // homeTitle.textContent = home.name;
                 homeTitle.textContent = `🏠 ${home.name}`;
                 wrapper.appendChild(homeTitle);
             }
@@ -57,7 +55,7 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Column headers
+            // Kolomkoppen
             if (this.config.showColumnHeaders) {
                 const thead = document.createElement("thead");
                 const headerRow = document.createElement("tr");
@@ -84,6 +82,7 @@ Module.register("MMM-MyTado", {
                 table.appendChild(thead);
             }
 
+            // Zones filteren
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
@@ -99,7 +98,7 @@ Module.register("MMM-MyTado", {
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                // Temperature display with degrees symbol
+                // Temperatuur display
                 let tempDisplay = "-";
                 let tempColor = "";
 
@@ -112,20 +111,18 @@ Module.register("MMM-MyTado", {
                     const currentTempStr = currentTempNum.toFixed(1);
                     const targetTempStr = frostProtection ? "OFF" : (!isNaN(targetTempNum) ? targetTempNum.toFixed(1) : "-");
                     tempDisplay = `${currentTempStr}° / ${targetTempStr === "OFF" ? "OFF" : targetTempStr + "°"}`;
+
                     if (currentTempNum < 18) tempColor = "temp-cold";
                     else if (currentTempNum <= 22) tempColor = "temp-ok";
                     else tempColor = "temp-hot";
                 }
 
-                // Humidity (do not show for hot water zones)
+                // Humidity
                 let humidityDisplay = "";
                 if (!isHotWaterZone) {
                     const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
-                    if (!isNaN(humidityNum)) {
-                        humidityDisplay = `💦 ${humidityNum.toFixed(0)}%`;
-                    } else {
-                        humidityDisplay = "-";
-                    }
+                    if (!isNaN(humidityNum)) humidityDisplay = `💦 ${humidityNum.toFixed(0)}%`;
+                    else humidityDisplay = "-";
                 }
 
                 // Status icons
@@ -138,7 +135,7 @@ Module.register("MMM-MyTado", {
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td><strong>${zone.name}</strong></td>
-                    ${this.config.showTemperature ? `<td class="${tempColor}">${tempDisplay}</td><td>${humidityDisplay}</td>` : ""}
+                    ${this.config.showTemperature ? `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td><td>${humidityDisplay}</td>` : ""}
                     <td>${statusIcons}</td>
                 `;
                 tbody.appendChild(row);
