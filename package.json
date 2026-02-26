@@ -5,7 +5,6 @@
   "main": "MMM-MyTado.js",
   "dependencies": {
     "node-tado-client":"^1.1.1",
-    "dotenv": "^16.4.0",
     "ws": "^8.16.0"
   },
    "repository": {
