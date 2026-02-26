@@ -18,7 +18,11 @@
 
 /* Right-align the humidity column */
 .tado-humidity {
-    text-align: right;
+    text-align: right !important;
+}
+
+.tado-table td.tado-humidity {
+    text-align: right !important;
 }
 
 /* Temperature Colors */
