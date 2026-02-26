@@ -124,7 +124,7 @@ module.exports = NodeHelper.create({
                 tadoHomes: this.tadoHomes
             };
 
-            // 🔥 cache opslaan
+            // 🔥 Save Cache
             this.cache = data;
             this.cacheTimestamp = Date.now();
 
