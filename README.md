@@ -5,8 +5,8 @@ I like the idea and built a version with a modern look and feel.
 
 ### The module displays the following information:
 
-* The Hone name (🏠)
-* The Zone names
+* The Home name (🏠)
+* The Zone names (Configurable names)
 * The current temperature and the target temperature
 * A symbol (🔥) to show if the heater is currently active.
 * The humidity (💦)
