@@ -67,6 +67,11 @@ Module.register("MMM-MyTado", {
                 tempHeader.textContent = this.config.tempColumnName.toUpperCase();
                 headerRow.appendChild(tempHeader);
 
+                // Empty spacer column
+                const spacerHeader = document.createElement("th");
+                spacerHeader.textContent = "";
+                headerRow.appendChild(spacerHeader);
+
                 const humidityHeader = document.createElement("th");
                 humidityHeader.textContent = this.config.humidityColumnName;
                 headerRow.appendChild(humidityHeader);
@@ -129,14 +134,16 @@ Module.register("MMM-MyTado", {
                 if (windowOpen) statusIcons += `<span class="status-window" title="Open Window">🪟</span>`;
                 if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Hot Water">🩸</span>`;
 
-                // Create table row with inline style for humidity right alignment
+                // Create table row with empty spacer column
                 const row = document.createElement("tr");
                 const tempCell = `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>`;
+                const spacerCell = `<td></td>`;
                 const humidityCell = `<td style="text-align: right;">${humidityDisplay}</td>`;
 
                 row.innerHTML = `
                     <td class="tado-zone">${zone.name}</td>
                     ${tempCell}
+                    ${spacerCell}
                     ${humidityCell}
                     <td>${statusIcons}</td>
                 `;
