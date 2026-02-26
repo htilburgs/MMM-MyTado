@@ -60,7 +60,7 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 |:----------------------|:-------------
 | `updateInterval`		| **REQUIRED** - The interval the information is updated (in milliseconds)<br /><br />Default: `1800000`</br>This value cannot be lower than <code>1800000</code> without a monthly subscription. </br>Otherwise users get a <code>Tado block</code>.</br>More info at https://help.tado.com/en/articles/12165739-limitation-for-rest-api-usage
 | `showZones`			| TADO uses Zones. When you use <code>[]</code> all zones will be shown (default)</br>You can also choose which zones you like to see, just fill in the zones <code>["Zone 1","Zone 2", etc]</code>
-| `showTemperatue`		| 
+| `showTemperature`		| 
 | `showHeating`			| 
 | `showOpenWindow`		| 
 | `showColumnHeaders`	| 
