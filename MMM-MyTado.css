@@ -11,6 +11,11 @@
     color: white;
 }
 
+.tado-zone {
+    color: var(--color-text-bright); /* wit in bright/dark MagicMirror */
+    font-weight: bold;                /* optioneel, maakt zone-namen bold */
+}
+
 /* Temperature Colors */
 .temp-cold { color: #1e90ff; }
 .temp-ok { color: #28a745; }
