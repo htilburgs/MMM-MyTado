@@ -1,15 +1,20 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 1800000,          // 30 minuten (free Tado API)
-        showTemperature: true,
-        showZones: [],                    // [] = alle zones, anders ["zone 1","zone 2"]
-        showHomeName: true,               // Toon home-naam
-        showColumnHeaders: true,          // Toon kolomkoppen
+        updateInterval: 1800000,            // 30 minutes (free Tado API)
+        showZones: [],                      // [] = all zones, otherwise ["zone 1","zone 2"]
+        showHomeName: true,                 // Show home name
+        showColumnHeaders: true,            // Show column headers
+        useColors: true,                    // true = temperature colors on, false = off
+        
+        showTemperature: true,              //
+        showHeating: true,                  //
+        showOpenWindow: true,               //
+        
         zoneColumnName: "ZONE",
         tempColumnName: "TEMP (°C)",
-        humidityColumnName: "",           // lege string = geen titel
+        humidityColumnName: "",             // Empty string = no title
         statusColumnName: "STATUS",
-        useColors: true                   // true = temp kleuren aan, false = uit
+        
     },
 
     getStyles: function () {
@@ -55,7 +60,7 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Kolomkoppen
+            // Column headers
             if (this.config.showColumnHeaders) {
                 const thead = document.createElement("thead");
                 const headerRow = document.createElement("tr");
@@ -82,7 +87,7 @@ Module.register("MMM-MyTado", {
                 table.appendChild(thead);
             }
 
-            // Zones filteren
+            // Filter zones to show
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
@@ -98,7 +103,7 @@ Module.register("MMM-MyTado", {
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                // Temperatuur display
+                // Temperature display
                 let tempDisplay = "-";
                 let tempColor = "";
 
@@ -117,7 +122,7 @@ Module.register("MMM-MyTado", {
                     else tempColor = "temp-hot";
                 }
 
-                // Humidity
+                // Humidity display
                 let humidityDisplay = "";
                 if (!isHotWaterZone) {
                     const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
