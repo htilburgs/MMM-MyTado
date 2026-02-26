@@ -12,8 +12,8 @@
 }
 
 .tado-zone {
-    color: var(--color-text-bright); /* wit in bright/dark MagicMirror */
-    font-weight: bold;                /* optioneel, maakt zone-namen bold */
+    color: #b8b8b8;
+    font-weight: bold;           
 }
 
 /* Temperature Colors */
