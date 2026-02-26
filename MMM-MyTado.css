@@ -11,6 +11,7 @@
     color: white;
 }
 
+/*
 .tado-table {
     width: 100%;
     border-collapse: collapse;
@@ -28,6 +29,7 @@
     background-color: #f2f2f2;
     text-transform: uppercase;
 }
+*/
 
 /* Temperature Colors */
 .temp-cold { color: #1e90ff; }
