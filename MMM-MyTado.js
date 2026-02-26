@@ -4,11 +4,11 @@ Module.register("MMM-MyTado", {
         showZones: [],                    // [] = all zones, otherwise ["zone 1","zone 2"]
         showHomeName: true,               // Show home name
         showColumnHeaders: true,          // Show column headers
-        useColors: true,                  // true = temperature colors on, false = off
         zoneColumnName: "ZONE",
         tempColumnName: "TEMP (°C)",
         humidityColumnName: "",           // empty string = no title
         statusColumnName: "STATUS",
+        useColors: true                   // true = temperature colors on, false = off
     },
 
     getStyles: function () {
@@ -63,7 +63,6 @@ Module.register("MMM-MyTado", {
                 zoneHeader.textContent = this.config.zoneColumnName.toUpperCase();
                 headerRow.appendChild(zoneHeader);
 
-                // Always show temperature
                 const tempHeader = document.createElement("th");
                 tempHeader.textContent = this.config.tempColumnName.toUpperCase();
                 headerRow.appendChild(tempHeader);
@@ -130,11 +129,15 @@ Module.register("MMM-MyTado", {
                 if (windowOpen) statusIcons += `<span class="status-window" title="Open Window">🪟</span>`;
                 if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Hot Water">🩸</span>`;
 
+                // Create table row with inline style for humidity right alignment
                 const row = document.createElement("tr");
+                const tempCell = `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>`;
+                const humidityCell = `<td style="text-align: right;">${humidityDisplay}</td>`;
+
                 row.innerHTML = `
                     <td class="tado-zone">${zone.name}</td>
-                    <td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>
-                    <td class="tado-humidity">${humidityDisplay}</td>
+                    ${tempCell}
+                    ${humidityCell}
                     <td>${statusIcons}</td>
                 `;
                 tbody.appendChild(row);
