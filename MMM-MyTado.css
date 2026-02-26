@@ -11,26 +11,6 @@
     color: white;
 }
 
-/*
-.tado-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-
-.tado-table th, .tado-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-    vertical-align: middle;
-}
-
-.tado-table th {
-    background-color: #f2f2f2;
-    text-transform: uppercase;
-}
-*/
-
 /* Temperature Colors */
 .temp-cold { color: #1e90ff; }
 .temp-ok { color: #28a745; }
