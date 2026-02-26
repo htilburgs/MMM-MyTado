@@ -35,10 +35,3 @@
 .temp-cold { color: #1e90ff; }   /* cold */
 .temp-ok { color: #28a745; }     /* comfortable */
 .temp-hot { color: #ff4500; }    /* hot */
-
-/* Status icon colors 
-.status-heating { color: #ff0000; }
-.status-frost { color: #1e90ff; }
-.status-window { color: #00bfff; }
-.status-hotwater { color: #ff0000; margin-left: 3px; }
-*/
