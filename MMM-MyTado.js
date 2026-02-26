@@ -134,7 +134,7 @@ Module.register("MMM-MyTado", {
                 row.innerHTML = `
                     <td class="tado-zone">${zone.name}</td>
                     <td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>
-                    <td>${humidityDisplay}</td>
+                    <td class="tado-humidity">${humidityDisplay}</td>
                     <td>${statusIcons}</td>
                 `;
                 tbody.appendChild(row);
