@@ -1,5 +1,13 @@
 # MMM-MyTado
 This a [Magic Mirror²](https://github.com/MichMich/MagicMirror) for your TADO Thermostat. </br>
+The module is based on the idea from WouterEekhout, but his module is not maintained anymore. </br>
+
+### The module displays the following information:
+
+* A symbol to show if the heater is currently active.
+* The current temperature and the target temperature
+* The humidity
+* The hot water temperature
 
 <img width="436" height="214" alt="image" src="https://github.com/user-attachments/assets/c4f43789-c3a1-4b78-a822-fe4ba2809c30" />
 
