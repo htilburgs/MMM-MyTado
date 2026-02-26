@@ -4,11 +4,12 @@ Module.register("MMM-MyTado", {
         showZones: [],                    // [] = all zones, otherwise ["zone 1","zone 2"]
         showHomeName: true,               // Show home name
         showColumnHeaders: true,          // Show column headers
+        useColors: true,                   // true = temperature colors on, false = off
+        
         zoneColumnName: "ZONE",
         tempColumnName: "TEMP (°C)",
         humidityColumnName: "",           // empty string = no title
         statusColumnName: "STATUS",
-        useColors: true                   // true = temperature colors on, false = off
     },
 
     getStyles: function () {
