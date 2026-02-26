@@ -5,10 +5,12 @@ I like the idea and built a version with a modern look and feel.
 
 ### The module displays the following information:
 
-* A symbol to show if the heater is currently active.
+* A symbol (🔥) to show if the heater is currently active.
 * The current temperature and the target temperature
-* The humidity
-* The hot water temperature
+* The humidity (💦)
+* The hot water temperature (🩸)
+* Frost Protection (❄️)
+* Open Window (🪟)
 
 <img width="436" height="214" alt="image" src="https://github.com/user-attachments/assets/c4f43789-c3a1-4b78-a822-fe4ba2809c30" />
 
@@ -80,3 +82,7 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 
 ## Versions
 v1.0.0 - Initial release
+
+## Credits
+This module is inspired by the [MMM-Tado module](https://github.com/WouterEekhout/MMM-Tado) </br>
+Using the NPM package [node-tado-client](https://github.com/mattdavis90/node-tado-client)
