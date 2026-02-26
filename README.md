@@ -1,6 +1,7 @@
 # MMM-MyTado
 This a [Magic Mirror²](https://github.com/MichMich/MagicMirror) for your TADO Thermostat. </br>
 The module is based on the idea from WouterEekhout, but his module is not maintained anymore. </br>
+I like the idea and built a version with a modern look and feel.
 
 ### The module displays the following information:
 
@@ -38,20 +39,19 @@ Add the module to your modules array in your config.js.
   config: {
 	updateInterval: 1800000,             // 30 min - because of limitation free account
     showZones: [],                       // [] = all zones, otherwise use zonename ["zone 1","zone 2"]
-    showTemperature: true,
-    showHeating: true,
-    showOpenWindow: true,
-	showHomeName: true,
-    showColumnHeaders: true,             // true = show Columns, false = hide columns
-    zoneColumnName: "ZONE",
-    tempColumnName: "TEMP (°C)",
+	showHomeName: true,					 // Show Home Name as defined within the Tado environment
+    showColumnHeaders: true,             // true = show Columns Headers, false = Hide Columns Headers
+	useColors: false,					 // Show colors for the Temperature column
+    zoneColumnName: "ZONE",				 // Custom Zone Column Name - default = ZONE
+    tempColumnName: "TEMP (°C)",		 // Custom Temperature Column Name - default = TEMP (°C)
     humidityColumnName: "",              // empty for no title (default)
-    statusColumnName: "STATUS"
+    statusColumnName: "STATUS"			 // Custom Status Column Name - default = STATUS
   }
 },
 ```
 ## Authentication
 The first time you run the module, you will need to authenticate with the Tado API. </br>
+No username or password is stored in MMM-MyTado, everything works with OAuth Authentication </br>
 The module will log a URL that you need to visit in your browser to complete the authentication process. </br>
 Check the logs for a message like this:
 ```
