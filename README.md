@@ -33,6 +33,7 @@ Add the module to your modules array in your config.js.
     showTemperature: true,
     showHeating: true,
     showOpenWindow: true,
+	showHomeName: true,
     showColumnHeaders: true,             // true = show Columns, false = hide columns
     zoneColumnName: "ZONE",
     tempColumnName: "TEMP (°C)",
