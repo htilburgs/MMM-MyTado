@@ -1,20 +1,14 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 1800000,            // 30 minutes (free Tado API)
-        showZones: [],                      // [] = all zones, otherwise ["zone 1","zone 2"]
-        showHomeName: true,                 // Show home name
-        showColumnHeaders: true,            // Show column headers
-        useColors: true,                    // true = temperature colors on, false = off
-        
-        showTemperature: true,              //
-        showHeating: true,                  //
-        showOpenWindow: true,               //
-        
+        updateInterval: 1800000,          // 30 minutes (free Tado API)
+        showZones: [],                    // [] = all zones, otherwise ["zone 1","zone 2"]
+        showHomeName: true,               // Show home name
+        showColumnHeaders: true,          // Show column headers
+        useColors: true,                  // true = temperature colors on, false = off
         zoneColumnName: "ZONE",
         tempColumnName: "TEMP (°C)",
-        humidityColumnName: "",             // Empty string = no title
+        humidityColumnName: "",           // empty string = no title
         statusColumnName: "STATUS",
-        
     },
 
     getStyles: function () {
@@ -69,15 +63,14 @@ Module.register("MMM-MyTado", {
                 zoneHeader.textContent = this.config.zoneColumnName.toUpperCase();
                 headerRow.appendChild(zoneHeader);
 
-                if (this.config.showTemperature) {
-                    const tempHeader = document.createElement("th");
-                    tempHeader.textContent = this.config.tempColumnName.toUpperCase();
-                    headerRow.appendChild(tempHeader);
+                // Always show temperature
+                const tempHeader = document.createElement("th");
+                tempHeader.textContent = this.config.tempColumnName.toUpperCase();
+                headerRow.appendChild(tempHeader);
 
-                    const humidityHeader = document.createElement("th");
-                    humidityHeader.textContent = this.config.humidityColumnName;
-                    headerRow.appendChild(humidityHeader);
-                }
+                const humidityHeader = document.createElement("th");
+                humidityHeader.textContent = this.config.humidityColumnName;
+                headerRow.appendChild(humidityHeader);
 
                 const statusHeader = document.createElement("th");
                 statusHeader.textContent = this.config.statusColumnName.toUpperCase();
@@ -140,7 +133,8 @@ Module.register("MMM-MyTado", {
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td class="tado-zone">${zone.name}</td>
-                    ${this.config.showTemperature ? `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td><td>${humidityDisplay}</td>` : ""}
+                    <td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>
+                    <td>${humidityDisplay}</td>
                     <td>${statusIcons}</td>
                 `;
                 tbody.appendChild(row);
