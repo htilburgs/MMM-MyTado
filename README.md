@@ -25,7 +25,7 @@ npm install
 ## Update
 When you need to update this module:
 ```
-cd ~/MagicMirror/modules/MMM-MyTasklist
+cd ~/MagicMirror/modules/MMM-MyTado
 git pull
 npm install
 ```
