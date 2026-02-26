@@ -1,8 +1,12 @@
+/* MMM-MyTado.css */
+
+/* Wrapper for the module */
 .tado-wrapper {
     margin: 10px;
     font-family: sans-serif;
 }
 
+/* Home title */
 .tado-home {
     font-weight: bold;
     font-size: 1.2rem;
@@ -11,28 +15,45 @@
     color: white;
 }
 
+/* Table styles */
+.tado-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.tado-table th,
+.tado-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Column headers */
+.tado-table th {
+    background-color: #f2f2f2;
+    text-transform: uppercase;
+}
+
+/* Zone names */
 .tado-zone {
     color: #b8b8b8;
-    font-weight: bold;           
+    font-weight: bold;
 }
 
-/* Right-align the humidity column */
-.tado-humidity {
-    text-align: right !important;
-}
-
+/* Humidity column - right aligned */
 .tado-table td.tado-humidity {
-    text-align: right !important;
+    text-align: right;
 }
 
-/* Temperature Colors */
-.temp-cold { color: #1e90ff; }
-.temp-ok { color: #28a745; }
-.temp-hot { color: #ff4500; }
+/* Temperature colors */
+.temp-cold { color: #1e90ff; }   /* cold */
+.temp-ok { color: #28a745; }     /* comfortable */
+.temp-hot { color: #ff4500; }    /* hot */
 
-/* Status Icon Colors */
+/* Status icon colors */
 .status-heating { color: #ff0000; }
 .status-frost { color: #1e90ff; }
 .status-window { color: #00bfff; }
-.status-hotwater { color: #ff0000; margin-left: 3px; } /* Warm Water */
-
+.status-hotwater { color: #ff0000; margin-left: 3px; }
