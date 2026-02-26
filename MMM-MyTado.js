@@ -69,7 +69,7 @@ Module.register("MMM-MyTado", {
 
                 // Empty spacer column
                 const spacerHeader = document.createElement("th");
-                spacerHeader.textContent = " - ";
+                spacerHeader.textContent = "";
                 headerRow.appendChild(spacerHeader);
 
                 const humidityHeader = document.createElement("th");
@@ -137,7 +137,7 @@ Module.register("MMM-MyTado", {
                 // Create table row with empty spacer column
                 const row = document.createElement("tr");
                 const tempCell = `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>`;
-                const spacerCell = `<td></td>`;
+                const spacerCell = `<td>   </td>`;
                 const humidityCell = `<td style="text-align: right;">${humidityDisplay}</td>`;
 
                 row.innerHTML = `
