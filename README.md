@@ -14,7 +14,7 @@ I like the idea and built a version with a modern look and feel.
 * Frost Protection (❄️)
 * Open Window (🪟)
 
-<img width="436" height="214" alt="image" src="https://github.com/user-attachments/assets/c4f43789-c3a1-4b78-a822-fe4ba2809c30" />
+<img width="402" height="272" alt="SCR-20260226-ukba" src="https://github.com/user-attachments/assets/d3121022-f48e-4c22-9f9b-e2c04a2189d5" />
 
 ## Installation
 Clone this repository in your modules folder, and install dependencies:
