@@ -1,10 +1,21 @@
 {
   "name": "mmm-mytado",
-  "version": "3.0.0",
-  "description": "Advanced Tado module for MagicMirror",
+  "version": "1.0.0",
+  "description": "An Advanced Tado module for MagicMirror",
+  "main": "MMM-MyTado.js",
   "dependencies": {
     "node-tado-client":"^1.1.1",
     "dotenv": "^16.4.0",
     "ws": "^8.16.0"
-  }
+  },
+   "repository": {
+    "type": "git",
+    "url": "git+https://github.com/htilburgs/MMM-MyTado.git"
+  },
+   "author": "H. Tilburgs",
+   "license": "MIT",
+   "bugs": {
+    "url": "https://github.com/htilburgs/MMM-MyTado/issues"
+  },
+  "homepage": "https://github.com/htilburgs/MMM-MyTado#readme"
 }
