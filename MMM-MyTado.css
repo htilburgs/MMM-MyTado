@@ -16,6 +16,11 @@
     font-weight: bold;           
 }
 
+/* Right-align the humidity column */
+.tado-humidity {
+    text-align: right;
+}
+
 /* Temperature Colors */
 .temp-cold { color: #1e90ff; }
 .temp-ok { color: #28a745; }
