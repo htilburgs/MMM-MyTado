@@ -45,7 +45,8 @@ Module.register("MMM-MyTado", {
             if (this.config.showHomeName) {
                 const homeTitle = document.createElement("div");
                 homeTitle.className = "tado-home";
-                homeTitle.textContent = home.name;
+               // homeTitle.textContent = home.name;
+                homeTitle.textContent = `🏡 ${home.name}`;
                 wrapper.appendChild(homeTitle);
             }
 
