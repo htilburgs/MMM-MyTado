@@ -4,8 +4,7 @@ Module.register("MMM-MyTado", {
         showZones: [],                    // [] = all zones, otherwise ["zone 1","zone 2"]
         showHomeName: true,               // Show home name
         showColumnHeaders: true,          // Show column headers
-        useColors: true,                   // true = temperature colors on, false = off
-        
+        useColors: true,                  // true = temperature colors on, false = off
         zoneColumnName: "ZONE",
         tempColumnName: "TEMP (°C)",
         humidityColumnName: "",           // empty string = no title
@@ -67,11 +66,6 @@ Module.register("MMM-MyTado", {
                 const tempHeader = document.createElement("th");
                 tempHeader.textContent = this.config.tempColumnName.toUpperCase();
                 headerRow.appendChild(tempHeader);
-
-                // Empty spacer column
-                const spacerHeader = document.createElement("th");
-                spacerHeader.textContent = "";
-                headerRow.appendChild(spacerHeader);
 
                 const humidityHeader = document.createElement("th");
                 humidityHeader.textContent = this.config.humidityColumnName;
@@ -135,7 +129,7 @@ Module.register("MMM-MyTado", {
                 if (windowOpen) statusIcons += `<span class="status-window" title="Open Window">🪟</span>`;
                 if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Hot Water">🩸</span>`;
 
-                // Create table row with empty spacer column
+                // Create table row (no spacer)
                 const row = document.createElement("tr");
                 const tempCell = `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>`;
                 const humidityCell = `<td style="text-align: right;">${humidityDisplay}</td>`;
@@ -143,7 +137,6 @@ Module.register("MMM-MyTado", {
                 row.innerHTML = `
                     <td class="tado-zone">${zone.name}</td>
                     ${tempCell}
-                    ${spacerCell}
                     ${humidityCell}
                     <td>${statusIcons}</td>
                 `;
