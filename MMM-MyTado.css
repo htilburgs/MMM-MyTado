@@ -40,4 +40,5 @@
 .status-heating { color: #ff0000; }
 .status-frost { color: #1e90ff; }
 .status-window { color: #00bfff; }
-.status-hotwater { color: #ff0000; margin-left: 3px; }
+.status-hotwater { color: green; margin-left: 3px; }
+/* .status-hotwater { color: #ff0000; margin-left: 3px; } */
