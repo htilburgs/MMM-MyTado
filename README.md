@@ -1,5 +1,5 @@
 # MMM-MyTado
-This a [Magic Mirror²](https://github.com/MichMich/MagicMirror) for your TADO Thermostat. </br>
+This a [Magic Mirror²](https://github.com/MichMich/MagicMirror) module for your TADO Thermostat. </br>
 The module is based on the idea from WouterEekhout, but his module is not maintained anymore. </br>
 I like the idea and built a version with a modern look and feel.
 
