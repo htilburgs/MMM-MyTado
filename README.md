@@ -86,7 +86,7 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 | `lastUpdateName`		| Custom Last update name - default: <b>`Last update`</b>
 
 ## Versions
-v1.0.0 - Initial release
+v1.0.0 - Initial release </br>
 v1.0.1 - Add Last update option
 
 ## Credits
