@@ -162,5 +162,5 @@ getDom: function () {
     }
 
     return wrapper;
-}    }
+} 
 });
