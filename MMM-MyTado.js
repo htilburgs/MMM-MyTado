@@ -10,6 +10,7 @@ Module.register("MMM-MyTado", {
         tempColumnName: "TEMP (°C)",
         humidityColumnName: "",           // empty string = no title
         statusColumnName: "STATUS",
+        lastUpdateName: "Last update"     // Custom footer text
     },
 
     getStyles: function () {
@@ -148,7 +149,7 @@ Module.register("MMM-MyTado", {
             wrapper.appendChild(table);
         });
 
-        // Footer: last update
+        // Footer: last update with custom label
         if (this.config.showLastUpdate && this.tadoData?.lastUpdate) {
             const lastUpdateDiv = document.createElement("div");
             lastUpdateDiv.className = "last-update";
@@ -156,7 +157,9 @@ Module.register("MMM-MyTado", {
             const date = new Date(this.tadoData.lastUpdate);
             const hours = date.getHours().toString().padStart(2, "0");
             const minutes = date.getMinutes().toString().padStart(2, "0");
-            lastUpdateDiv.textContent = `Last update: ${hours}:${minutes}`;
+
+            const label = this.config.lastUpdateName || "Last update";
+            lastUpdateDiv.textContent = `${label}: ${hours}:${minutes}`;
 
             wrapper.appendChild(lastUpdateDiv);
         }
