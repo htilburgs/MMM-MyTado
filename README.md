@@ -87,7 +87,8 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 
 ## Versions
 v1.0.0 - Initial release </br>
-v1.0.1 - Add Last update option
+v1.0.1 - Add Last update option </br>
+v1.0.2 - Allignment Home name and Status icons always on the right (CSS)
 
 ## Credits
 This module is inspired by the [MMM-Tado module from WouterEekhout](https://github.com/WouterEekhout/MMM-Tado) </br>
