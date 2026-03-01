@@ -47,6 +47,7 @@
 .temp-hot { color: #ff4500; }    /* hot */
 
 .status-icon { 
-    float: right !important; 
+    display: flex;
+    justify-content: center;
 }
 
