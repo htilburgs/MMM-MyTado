@@ -48,6 +48,6 @@
 
 .status-icon { 
     display: flex;
-    justify-content: center;
+    justify-content: right;
 }
 
