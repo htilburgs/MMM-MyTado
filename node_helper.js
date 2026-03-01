@@ -16,19 +16,20 @@ module.exports = NodeHelper.create({
 
     cache: null,
     cacheTimestamp: 0,
-    cacheTTL: 60 * 1000,
+    cacheTTL: 60 * 1000, // 60 seconds
 
     start: async function () {
         this.tadoClient = new Tado();
 
-        if (fs.existsSync(TOKEN_FILE)) {
-            try {
+        try {
+            if (fs.existsSync(TOKEN_FILE)) {
                 const data = fs.readFileSync(TOKEN_FILE, "utf8");
                 const tokenData = JSON.parse(data);
                 if (tokenData?.refresh_token) this.refreshToken = tokenData.refresh_token;
-            } catch (err) {
-                console.error("MMM-MyTado: Error loading refresh token", err);
+                console.log("MMM-MyTado: Refresh token loaded");
             }
+        } catch (err) {
+            console.error("MMM-MyTado: Error loading refresh token", err);
         }
 
         this.tadoClient.setTokenCallback((token) => {
@@ -36,21 +37,32 @@ module.exports = NodeHelper.create({
                 this.refreshToken = token.refresh_token;
                 try {
                     fs.writeFileSync(TOKEN_FILE, JSON.stringify(token), "utf8");
+                    console.log("MMM-MyTado: Refresh token saved");
                 } catch (err) {
                     console.error("MMM-MyTado: Error saving refresh token", err);
                 }
             }
         });
 
-        await this.authenticate();
+        try {
+            await this.authenticate();
+        } catch (err) {
+            console.error("MMM-MyTado: Authentication error", err);
+        }
     },
 
     authenticate: async function () {
         try {
             const [verify, futureToken] = await this.tadoClient.authenticate(this.refreshToken);
-            if (verify) console.log("Open this URL to authenticate:", verify.verification_uri_complete);
+
+            if (verify) {
+                console.log("MMM-MyTado: Device authentication required");
+                console.log("Open this URL to authenticate:", verify.verification_uri_complete);
+            }
+
             await futureToken;
             this.authenticated = true;
+            console.log("MMM-MyTado: Successfully authenticated");
         } catch (err) {
             console.error("MMM-MyTado: Authentication failed:", err);
         }
@@ -62,40 +74,39 @@ module.exports = NodeHelper.create({
         const now = Date.now();
         if (this.cache && now - this.cacheTimestamp < this.cacheTTL) {
             this.sendSocketNotification("NEW_DATA", { ...this.cache, lastUpdate: this.cacheTimestamp });
+            console.log("MMM-MyTado: Using cached data");
             return;
         }
 
         this.fetching = true;
         try {
-            const delay = ms => new Promise(r => setTimeout(r, ms));
+            console.log("MMM-MyTado: Fetching Tado data...");
 
             this.tadoMe = await this.tadoClient.getMe();
+            console.log("MMM-MyTado: Retrieved homes:", this.tadoMe.homes.map(h => h.name));
+
             this.tadoHomes = [];
 
             for (const home of this.tadoMe.homes) {
-                const homeInfo = { id: home.id, name: home.name, zones: [] };
-                this.tadoHomes.push(homeInfo);
-
+                console.log(`MMM-MyTado: Fetching zones for home "${home.name}"`);
                 const zones = await this.tadoClient.getZones(home.id);
-                const zonesToFetch = this.showZones.length ? zones.filter(z => this.showZones.includes(z.name)) : zones;
 
-                const maxConcurrent = 5;
+                const zonesToFetch = this.showZones.length
+                    ? zones.filter(z => this.showZones.includes(z.name))
+                    : zones;
+
                 const results = [];
-                for (let i = 0; i < zonesToFetch.length; i += maxConcurrent) {
-                    const batch = zonesToFetch.slice(i, i + maxConcurrent);
-                    const batchResults = await Promise.all(batch.map(async (zone) => {
-                        try {
-                            const state = await this.tadoClient.getZoneState(home.id, zone.id);
-                            return { id: zone.id, name: zone.name, type: zone.type, state };
-                        } catch (err) {
-                            console.error(`Failed fetching zone ${zone.name}`, err);
-                            return null;
-                        }
-                    }));
-                    results.push(...batchResults.filter(r => r));
-                    await delay(200);
+                for (const zone of zonesToFetch) {
+                    try {
+                        const state = await this.tadoClient.getZoneState(home.id, zone.id);
+                        results.push({ id: zone.id, name: zone.name, type: zone.type, state });
+                        console.log(`MMM-MyTado: Zone "${zone.name}" state fetched`);
+                    } catch (err) {
+                        console.error(`MMM-MyTado: Failed fetching zone "${zone.name}"`, err);
+                    }
                 }
-                homeInfo.zones = results;
+
+                this.tadoHomes.push({ id: home.id, name: home.name, zones: results });
             }
 
             const data = { tadoMe: this.tadoMe, tadoHomes: this.tadoHomes, lastUpdate: Date.now() };
@@ -103,6 +114,8 @@ module.exports = NodeHelper.create({
             this.cacheTimestamp = Date.now();
 
             this.sendSocketNotification("NEW_DATA", data);
+            console.log("MMM-MyTado: Data sent to frontend");
+
         } catch (err) {
             console.error("MMM-MyTado: Error in getData:", err);
         } finally {
@@ -128,7 +141,13 @@ module.exports = NodeHelper.create({
             }, payload);
 
             this.showZones = this.config.showZones || [];
+
+            console.log("MMM-MyTado: Config received:", this.config);
+
+            // Immediately fetch data
             this.getData();
+
+            // Repeat on interval
             setInterval(() => this.getData(), this.config.updateInterval || 300000);
         }
     }
