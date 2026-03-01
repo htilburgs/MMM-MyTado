@@ -16,7 +16,7 @@ module.exports = NodeHelper.create({
 
     cache: null,
     cacheTimestamp: 0,
-    cacheTTL: 60 * 1000, // 60 seconds
+    cacheTTL: 60 * 1000,
 
     start: async function () {
         this.tadoClient = new Tado();
@@ -25,21 +25,17 @@ module.exports = NodeHelper.create({
             try {
                 const data = fs.readFileSync(TOKEN_FILE, "utf8");
                 const tokenData = JSON.parse(data);
-                if (tokenData && tokenData.refresh_token) {
-                    this.refreshToken = tokenData.refresh_token;
-                    console.log("MMM-MyTado: Refresh token loaded.");
-                }
+                if (tokenData?.refresh_token) this.refreshToken = tokenData.refresh_token;
             } catch (err) {
                 console.error("MMM-MyTado: Error loading refresh token", err);
             }
         }
 
         this.tadoClient.setTokenCallback((token) => {
-            if (token && token.refresh_token) {
+            if (token?.refresh_token) {
                 this.refreshToken = token.refresh_token;
                 try {
                     fs.writeFileSync(TOKEN_FILE, JSON.stringify(token), "utf8");
-                    console.log("MMM-MyTado: Refresh token saved.");
                 } catch (err) {
                     console.error("MMM-MyTado: Error saving refresh token", err);
                 }
@@ -51,18 +47,10 @@ module.exports = NodeHelper.create({
 
     authenticate: async function () {
         try {
-            const [verify, futureToken] =
-                await this.tadoClient.authenticate(this.refreshToken);
-
-            if (verify) {
-                console.log("MMM-MyTado: Device authentication required.");
-                console.log("Open this URL to authenticate:");
-                console.log(verify.verification_uri_complete);
-            }
-
+            const [verify, futureToken] = await this.tadoClient.authenticate(this.refreshToken);
+            if (verify) console.log("Open this URL to authenticate:", verify.verification_uri_complete);
             await futureToken;
             this.authenticated = true;
-            console.log("MMM-MyTado: Successfully authenticated.");
         } catch (err) {
             console.error("MMM-MyTado: Authentication failed:", err);
         }
@@ -73,9 +61,7 @@ module.exports = NodeHelper.create({
 
         const now = Date.now();
         if (this.cache && now - this.cacheTimestamp < this.cacheTTL) {
-            // Return cached data with lastUpdate
-            const cachedWithTimestamp = { ...this.cache, lastUpdate: this.cacheTimestamp };
-            this.sendSocketNotification("NEW_DATA", cachedWithTimestamp);
+            this.sendSocketNotification("NEW_DATA", { ...this.cache, lastUpdate: this.cacheTimestamp });
             return;
         }
 
@@ -91,44 +77,32 @@ module.exports = NodeHelper.create({
                 this.tadoHomes.push(homeInfo);
 
                 const zones = await this.tadoClient.getZones(home.id);
-
-                const zonesToFetch = this.showZones.length > 0
-                    ? zones.filter(z => this.showZones.includes(z.name))
-                    : zones;
+                const zonesToFetch = this.showZones.length ? zones.filter(z => this.showZones.includes(z.name)) : zones;
 
                 const maxConcurrent = 5;
                 const results = [];
                 for (let i = 0; i < zonesToFetch.length; i += maxConcurrent) {
                     const batch = zonesToFetch.slice(i, i + maxConcurrent);
-                    const batchResults = await Promise.all(
-                        batch.map(async (zone) => {
-                            try {
-                                const state = await this.tadoClient.getZoneState(home.id, zone.id);
-                                return { id: zone.id, name: zone.name, type: zone.type, state };
-                            } catch (err) {
-                                console.error(`MMM-MyTado: Failed fetching zone ${zone.name}`, err);
-                                return null;
-                            }
-                        })
-                    );
-                    results.push(...batchResults.filter(r => r !== null));
+                    const batchResults = await Promise.all(batch.map(async (zone) => {
+                        try {
+                            const state = await this.tadoClient.getZoneState(home.id, zone.id);
+                            return { id: zone.id, name: zone.name, type: zone.type, state };
+                        } catch (err) {
+                            console.error(`Failed fetching zone ${zone.name}`, err);
+                            return null;
+                        }
+                    }));
+                    results.push(...batchResults.filter(r => r));
                     await delay(200);
                 }
                 homeInfo.zones = results;
             }
 
-            const data = {
-                tadoMe: this.tadoMe,
-                tadoHomes: this.tadoHomes,
-                lastUpdate: Date.now()
-            };
-
+            const data = { tadoMe: this.tadoMe, tadoHomes: this.tadoHomes, lastUpdate: Date.now() };
             this.cache = data;
             this.cacheTimestamp = Date.now();
 
             this.sendSocketNotification("NEW_DATA", data);
-
-            console.log("MMM-MyTado: Data sent to frontend.");
         } catch (err) {
             console.error("MMM-MyTado: Error in getData:", err);
         } finally {
@@ -138,11 +112,23 @@ module.exports = NodeHelper.create({
 
     socketNotificationReceived: function (notification, payload) {
         if (notification === "CONFIG") {
-            this.config = payload;
-            this.showZones = payload.showZones || [];
+            // Merge defaults with payload
+            this.config = Object.assign({
+                updateInterval: 1800000,
+                showZones: [],
+                showHomeName: true,
+                showColumnHeaders: true,
+                useColors: true,
+                showLastUpdate: true,
+                zoneColumnName: "ZONE",
+                tempColumnName: "TEMP (°C)",
+                humidityColumnName: "",
+                statusColumnName: "STATUS",
+                lastUpdateName: "Last update"
+            }, payload);
 
+            this.showZones = this.config.showZones || [];
             this.getData();
-
             setInterval(() => this.getData(), this.config.updateInterval || 300000);
         }
     }
