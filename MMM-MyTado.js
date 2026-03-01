@@ -19,10 +19,17 @@ Module.register("MMM-MyTado", {
 
     start: function () {
         this.tadoData = null;
-        this.sendSocketNotification("CONFIG", this.config);
     },
 
     socketNotificationReceived: function (notification, payload) {
+        if (notification === "CONFIG") {
+            // Merge defaults with user config
+            this.config = Object.assign({}, this.defaults, payload);
+            this.showZones = this.config.showZones || [];
+
+            this.sendSocketNotification("CONFIG", this.config); // forward config to Node helper
+        }
+
         if (notification === "NEW_DATA") {
             this.tadoData = payload;
             this.updateDom();
@@ -56,7 +63,6 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Column headers
             if (this.config.showColumnHeaders) {
                 const thead = document.createElement("thead");
                 const headerRow = document.createElement("tr");
@@ -81,7 +87,6 @@ Module.register("MMM-MyTado", {
                 table.appendChild(thead);
             }
 
-            // Filter zones to show
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
@@ -97,7 +102,6 @@ Module.register("MMM-MyTado", {
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                // Temperature display
                 let tempDisplay = "-";
                 let tempColor = "";
 
@@ -116,7 +120,6 @@ Module.register("MMM-MyTado", {
                     else tempColor = "temp-hot";
                 }
 
-                // Humidity display
                 let humidityDisplay = "";
                 if (!isHotWaterZone) {
                     const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
@@ -124,14 +127,12 @@ Module.register("MMM-MyTado", {
                     else humidityDisplay = "-";
                 }
 
-                // Status icons
                 let statusIcons = "";
                 if (heatingPower > 0) statusIcons += `<span class="status-heating" title="Heating">🔥</span>`;
                 else if (frostProtection) statusIcons += `<span class="status-frost" title="Frost Protection">❄️</span>`;
                 if (windowOpen) statusIcons += `<span class="status-window" title="Open Window">🪟</span>`;
                 if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Hot Water">🩸</span>`;
 
-                // Create table row
                 const row = document.createElement("tr");
                 const tempCell = `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>`;
                 const humidityCell = `<td style="text-align: right;">${humidityDisplay}</td>`;
@@ -158,9 +159,7 @@ Module.register("MMM-MyTado", {
             const hours = date.getHours().toString().padStart(2, "0");
             const minutes = date.getMinutes().toString().padStart(2, "0");
 
-            const label = this.config.lastUpdateName || "Last update";
-            lastUpdateDiv.textContent = `${label}: ${hours}:${minutes}`;
-
+            lastUpdateDiv.textContent = `${this.config.lastUpdateName}: ${hours}:${minutes}`;
             wrapper.appendChild(lastUpdateDiv);
         }
 
