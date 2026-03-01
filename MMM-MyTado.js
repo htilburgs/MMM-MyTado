@@ -10,7 +10,7 @@ Module.register("MMM-MyTado", {
         tempColumnName: "TEMP (°C)",
         humidityColumnName: "",           // empty string = no title
         statusColumnName: "STATUS",
-        lastUpdateName: "Last update"     // Custom footer text
+        lastUpdateName: "Last update"     // <-- customizable label
     },
 
     getStyles: function () {
@@ -19,17 +19,10 @@ Module.register("MMM-MyTado", {
 
     start: function () {
         this.tadoData = null;
+        this.sendSocketNotification("CONFIG", this.config); // send config to Node helper
     },
 
     socketNotificationReceived: function (notification, payload) {
-        if (notification === "CONFIG") {
-            // Merge defaults with user config
-            this.config = Object.assign({}, this.defaults, payload);
-            this.showZones = this.config.showZones || [];
-
-            this.sendSocketNotification("CONFIG", this.config); // forward config to Node helper
-        }
-
         if (notification === "NEW_DATA") {
             this.tadoData = payload;
             this.updateDom();
@@ -150,7 +143,7 @@ Module.register("MMM-MyTado", {
             wrapper.appendChild(table);
         });
 
-        // Footer: last update with custom label
+        // Footer: last update
         if (this.config.showLastUpdate && this.tadoData?.lastUpdate) {
             const lastUpdateDiv = document.createElement("div");
             lastUpdateDiv.className = "last-update";
