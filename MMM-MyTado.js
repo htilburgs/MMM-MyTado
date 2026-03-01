@@ -121,10 +121,10 @@ Module.register("MMM-MyTado", {
                 }
 
                 let statusIcons = "";
-                if (heatingPower > 0) statusIcons += `<span class="status-heating" title="Heating">🔥</span>`;
-                else if (frostProtection) statusIcons += `<span class="status-frost" title="Frost Protection">❄️</span>`;
-                if (windowOpen) statusIcons += `<span class="status-window" title="Open Window">🪟</span>`;
-                if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Hot Water">🩸</span>`;
+                if (heatingPower > 0) statusIcons += `<span class="status-icon" title="Heating">🔥</span>`;
+                else if (frostProtection) statusIcons += `<span class="status-icon" title="Frost Protection">❄️</span>`;
+                if (windowOpen) statusIcons += `<span class="status-icon" title="Open Window">🪟</span>`;
+                if (isHotWaterZone) statusIcons += `<span class="status-icon" title="Hot Water">🩸</span>`;
 
                 const row = document.createElement("tr");
                 const tempCell = `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>`;

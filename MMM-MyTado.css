@@ -13,6 +13,7 @@
     margin-top: 15px;
     margin-bottom: 5px;
     color: white;
+    text-align: right !important;
 }
 
 /* Column headers */
@@ -20,6 +21,7 @@
     text-transform: uppercase;
 }
 
+/* Update status */
 .last-update {
     font-size: 0.6em;
     color: #ccc;
@@ -43,3 +45,10 @@
 .temp-cold { color: #1e90ff; }   /* cold */
 .temp-ok { color: #28a745; }     /* comfortable */
 .temp-hot { color: #ff4500; }    /* hot */
+
+/* Status Icons - right aligned */
+.status-icon { 
+    display: flex;
+    justify-content: right;
+}
+
