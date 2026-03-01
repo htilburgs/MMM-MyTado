@@ -46,10 +46,12 @@ Add the module to your modules array in your config.js.
 	showHomeName: true,					 // Show Home Name as defined within the Tado environment
     showColumnHeaders: true,             // true = show Columns Headers, false = Hide Columns Headers
 	useColors: false,					 // Show colors for the Temperature column
+	showLastUpdate: true				 // Show last update
     zoneColumnName: "ZONE",				 // Custom Zone Column Name - default = ZONE
     tempColumnName: "TEMP (°C)",		 // Custom Temperature Column Name - default = TEMP (°C)
     humidityColumnName: "",              // empty for no title (default)
-    statusColumnName: "STATUS"			 // Custom Status Column Name - default = STATUS
+    statusColumnName: "STATUS",			 // Custom Status Column Name - default = STATUS
+	lastUpdateName: "Last update"		 // Custom Last update name - default = Last update
   }
 },
 ```
@@ -76,13 +78,16 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 | `showHomeName`		| Show the Home name as defined in the Tapo environment</br>Default: <b>`true`</b>
 | `showColumnHeaders`	| Show the Column Headers</br>Default: <b>`true`</b>
 | `useColors`			| Use Colors for the Temperature Column </br>Default: <b>`false`</b>
+| `showLastUpdate`		| Show Last Update as a footer<br>DefautL <b>`true`</b>
 | `zoneColumnName`		| Custom Zone Column Name - default: <b>`ZONE`</b>
 | `tempColumnName` 		| Custom Temperature Column Name - default: <b>`TEMP (°C)`</b>
 | `humidityColumnName` 	| Custom Humidity Column Name - default: <b>`Empty`</b> (Column Name is not shown)
 | `statusColumnName`   	| Custom Status Column Name - default: <b>`STATUS`</b>
+| `lastUpdateName`		| Custom Last update name - default: <b>`Last update`</b>
 
 ## Versions
 v1.0.0 - Initial release
+v1.0.1 - Add Last update option
 
 ## Credits
 This module is inspired by the [MMM-Tado module from WouterEekhout](https://github.com/WouterEekhout/MMM-Tado) </br>
