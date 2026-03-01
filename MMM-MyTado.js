@@ -1,14 +1,16 @@
 Module.register("MMM-MyTado", {
     defaults: {
-        updateInterval: 1800000,          // 30 minutes (free Tado API)
-        showZones: [],                    // [] = all zones, otherwise ["zone 1","zone 2"]
+        updateInterval: 1800000,          // 30 minutes
+        showZones: [],                    // [] = all zones
         showHomeName: true,               // Show home name
         showColumnHeaders: true,          // Show column headers
         useColors: true,                  // true = temperature colors on, false = off
+        showLastUpdate: true,             // Show last update footer
         zoneColumnName: "ZONE",
         tempColumnName: "TEMP (°C)",
         humidityColumnName: "",           // empty string = no title
         statusColumnName: "STATUS",
+        lastUpdateName: "Last update"     // <-- customizable label
     },
 
     getStyles: function () {
@@ -17,7 +19,7 @@ Module.register("MMM-MyTado", {
 
     start: function () {
         this.tadoData = null;
-        this.sendSocketNotification("CONFIG", this.config);
+        this.sendSocketNotification("CONFIG", this.config); // send config to Node helper
     },
 
     socketNotificationReceived: function (notification, payload) {
@@ -54,7 +56,6 @@ Module.register("MMM-MyTado", {
             const table = document.createElement("table");
             table.className = "tado-table";
 
-            // Column headers
             if (this.config.showColumnHeaders) {
                 const thead = document.createElement("thead");
                 const headerRow = document.createElement("tr");
@@ -79,7 +80,6 @@ Module.register("MMM-MyTado", {
                 table.appendChild(thead);
             }
 
-            // Filter zones to show
             const zonesToShow = this.config.showZones.length > 0
                 ? home.zones.filter(z => this.config.showZones.includes(z.name))
                 : home.zones;
@@ -95,7 +95,6 @@ Module.register("MMM-MyTado", {
                 const currentTempNum = this.getCurrentTemperature(zone);
                 const targetTempNum = parseFloat(zone.state.setting?.temperature?.celsius);
 
-                // Temperature display
                 let tempDisplay = "-";
                 let tempColor = "";
 
@@ -114,7 +113,6 @@ Module.register("MMM-MyTado", {
                     else tempColor = "temp-hot";
                 }
 
-                // Humidity display
                 let humidityDisplay = "";
                 if (!isHotWaterZone) {
                     const humidityNum = zone.state.sensorDataPoints?.humidity?.percentage;
@@ -122,14 +120,12 @@ Module.register("MMM-MyTado", {
                     else humidityDisplay = "-";
                 }
 
-                // Status icons
                 let statusIcons = "";
                 if (heatingPower > 0) statusIcons += `<span class="status-heating" title="Heating">🔥</span>`;
                 else if (frostProtection) statusIcons += `<span class="status-frost" title="Frost Protection">❄️</span>`;
                 if (windowOpen) statusIcons += `<span class="status-window" title="Open Window">🪟</span>`;
                 if (isHotWaterZone) statusIcons += `<span class="status-hotwater" title="Hot Water">🩸</span>`;
 
-                // Create table row (no spacer)
                 const row = document.createElement("tr");
                 const tempCell = `<td class="${this.config.useColors ? tempColor : ""}">${tempDisplay}</td>`;
                 const humidityCell = `<td style="text-align: right;">${humidityDisplay}</td>`;
@@ -146,6 +142,19 @@ Module.register("MMM-MyTado", {
             table.appendChild(tbody);
             wrapper.appendChild(table);
         });
+
+        // Footer: last update
+        if (this.config.showLastUpdate && this.tadoData?.lastUpdate) {
+            const lastUpdateDiv = document.createElement("div");
+            lastUpdateDiv.className = "last-update";
+
+            const date = new Date(this.tadoData.lastUpdate);
+            const hours = date.getHours().toString().padStart(2, "0");
+            const minutes = date.getMinutes().toString().padStart(2, "0");
+
+            lastUpdateDiv.textContent = `${this.config.lastUpdateName}: ${hours}:${minutes}`;
+            wrapper.appendChild(lastUpdateDiv);
+        }
 
         return wrapper;
     }
