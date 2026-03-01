@@ -50,5 +50,5 @@
 .status-frost { text-align: right; }
 .status-window { text-align: right; }
 .status-hotwater { text-align: right; }
-.status-icon { text-align: right; }
+.status-icon { text-align: right !important; }
 
