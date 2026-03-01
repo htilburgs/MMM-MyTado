@@ -21,7 +21,6 @@ module.exports = NodeHelper.create({
     start: async function () {
         this.tadoClient = new Tado();
 
-        // Load saved refresh token
         if (fs.existsSync(TOKEN_FILE)) {
             try {
                 const data = fs.readFileSync(TOKEN_FILE, "utf8");
@@ -35,7 +34,6 @@ module.exports = NodeHelper.create({
             }
         }
 
-        // Save new tokens automatically
         this.tadoClient.setTokenCallback((token) => {
             if (token && token.refresh_token) {
                 this.refreshToken = token.refresh_token;
@@ -75,8 +73,9 @@ module.exports = NodeHelper.create({
 
         const now = Date.now();
         if (this.cache && now - this.cacheTimestamp < this.cacheTTL) {
-            // Return cached data
-            this.sendSocketNotification("NEW_DATA", this.cache);
+            // Return cached data with lastUpdate
+            const cachedWithTimestamp = { ...this.cache, lastUpdate: this.cacheTimestamp };
+            this.sendSocketNotification("NEW_DATA", cachedWithTimestamp);
             return;
         }
 
@@ -93,7 +92,6 @@ module.exports = NodeHelper.create({
 
                 const zones = await this.tadoClient.getZones(home.id);
 
-                // Filter zones on showZones
                 const zonesToFetch = this.showZones.length > 0
                     ? zones.filter(z => this.showZones.includes(z.name))
                     : zones;
@@ -114,17 +112,17 @@ module.exports = NodeHelper.create({
                         })
                     );
                     results.push(...batchResults.filter(r => r !== null));
-                    await delay(200); // short break between batches
+                    await delay(200);
                 }
                 homeInfo.zones = results;
             }
 
             const data = {
                 tadoMe: this.tadoMe,
-                tadoHomes: this.tadoHomes
+                tadoHomes: this.tadoHomes,
+                lastUpdate: Date.now()
             };
 
-            // 🔥 Save Cache
             this.cache = data;
             this.cacheTimestamp = Date.now();
 
