@@ -69,7 +69,7 @@ module.exports = NodeHelper.create({
 
             await futureToken;
             this.authenticated = true;
-            this.logDebug("Successfully authenticated");
+            console.log("MMM-MyTado: Successfully authenticated");
         } catch (err) {
             console.error("MMM-MyTado: Authentication failed:", err);
         }
