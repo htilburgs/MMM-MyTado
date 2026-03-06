@@ -41,12 +41,16 @@ Add the module to your modules array in your config.js.
   header: "TADO Thermostaat",
   disabled: false,
   config: {
+	// Settings
 	updateInterval: 1800000,             // 30 min - because of limitation free account
     showZones: [],                       // [] = all zones, otherwise use zonename ["zone 1","zone 2"]
 	showHomeName: true,					 // Show Home Name as defined within the Tado environment
     showColumnHeaders: true,             // true = show Columns Headers, false = Hide Columns Headers
 	useColors: false,					 // Show colors for the Temperature column
-	showLastUpdate: true				 // Show last update
+	showLastUpdate: true,				 // Show last update
+	debug: false,						 // Show debug information in logging
+
+	// Custom Names
     zoneColumnName: "ZONE",				 // Custom Zone Column Name - default = ZONE
     tempColumnName: "TEMP (°C)",		 // Custom Temperature Column Name - default = TEMP (°C)
     humidityColumnName: "",              // empty for no title (default)
@@ -78,7 +82,8 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 | `showHomeName`		| Show the Home name as defined in the Tapo environment</br>Default: <b>`true`</b>
 | `showColumnHeaders`	| Show the Column Headers</br>Default: <b>`true`</b>
 | `useColors`			| Use Colors for the Temperature Column </br>Default: <b>`false`</b>
-| `showLastUpdate`		| Show Last Update as a footer<br>DefautL <b>`true`</b>
+| `showLastUpdate`		| Show Last Update as a footer<br>Default <b>`true`</b>
+| `debug`				| Show debug information in logs <br>Default <b>`false`</b>
 | `zoneColumnName`		| Custom Zone Column Name - default: <b>`ZONE`</b>
 | `tempColumnName` 		| Custom Temperature Column Name - default: <b>`TEMP (°C)`</b>
 | `humidityColumnName` 	| Custom Humidity Column Name - default: <b>`Empty`</b> (Column Name is not shown)
@@ -88,7 +93,8 @@ Visit the URL in your browser and follow the instructions to authenticate the mo
 ## Versions
 v1.0.0 - Initial release </br>
 v1.0.1 - Add Last update option </br>
-v1.0.2 - Allignment Home name and Status icons always on the right (CSS)
+v1.0.2 - Allignment Home name and Status icons always on the right (CSS)</br>
+v1.0.3 - Add debug option, to prevent to many loggings in the logfiles
 
 ## Credits
 This module is inspired by the [MMM-Tado module from WouterEekhout](https://github.com/WouterEekhout/MMM-Tado) </br>
