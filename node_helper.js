@@ -18,6 +18,13 @@ module.exports = NodeHelper.create({
     cacheTimestamp: 0,
     cacheTTL: 60 * 1000, // 60 seconds
 
+    // Debug-log helper
+    logDebug: function (...args) {
+        if (this.config?.debug) {
+            console.log("MMM-MyTado [DEBUG]:", ...args);
+        }
+    },
+
     start: async function () {
         this.tadoClient = new Tado();
 
@@ -26,7 +33,7 @@ module.exports = NodeHelper.create({
                 const data = fs.readFileSync(TOKEN_FILE, "utf8");
                 const tokenData = JSON.parse(data);
                 if (tokenData?.refresh_token) this.refreshToken = tokenData.refresh_token;
-                console.log("MMM-MyTado: Refresh token loaded");
+                this.logDebug("Refresh token loaded");
             }
         } catch (err) {
             console.error("MMM-MyTado: Error loading refresh token", err);
@@ -37,7 +44,7 @@ module.exports = NodeHelper.create({
                 this.refreshToken = token.refresh_token;
                 try {
                     fs.writeFileSync(TOKEN_FILE, JSON.stringify(token), "utf8");
-                    console.log("MMM-MyTado: Refresh token saved");
+                    this.logDebug("Refresh token saved");
                 } catch (err) {
                     console.error("MMM-MyTado: Error saving refresh token", err);
                 }
@@ -62,7 +69,7 @@ module.exports = NodeHelper.create({
 
             await futureToken;
             this.authenticated = true;
-            console.log("MMM-MyTado: Successfully authenticated");
+            this.logDebug("Successfully authenticated");
         } catch (err) {
             console.error("MMM-MyTado: Authentication failed:", err);
         }
@@ -74,21 +81,21 @@ module.exports = NodeHelper.create({
         const now = Date.now();
         if (this.cache && now - this.cacheTimestamp < this.cacheTTL) {
             this.sendSocketNotification("NEW_DATA", { ...this.cache, lastUpdate: this.cacheTimestamp });
-            console.log("MMM-MyTado: Using cached data");
+            this.logDebug("Using cached data");
             return;
         }
 
         this.fetching = true;
         try {
-            console.log("MMM-MyTado: Fetching Tado data...");
+            this.logDebug("Fetching Tado data...");
 
             this.tadoMe = await this.tadoClient.getMe();
-            console.log("MMM-MyTado: Retrieved homes:", this.tadoMe.homes.map(h => h.name));
+            this.logDebug("Retrieved homes:", this.tadoMe.homes.map(h => h.name));
 
             this.tadoHomes = [];
 
             for (const home of this.tadoMe.homes) {
-                console.log(`MMM-MyTado: Fetching zones for home "${home.name}"`);
+                this.logDebug(`Fetching zones for home "${home.name}"`);
                 const zones = await this.tadoClient.getZones(home.id);
 
                 const zonesToFetch = this.showZones.length
@@ -100,7 +107,7 @@ module.exports = NodeHelper.create({
                     try {
                         const state = await this.tadoClient.getZoneState(home.id, zone.id);
                         results.push({ id: zone.id, name: zone.name, type: zone.type, state });
-                        console.log(`MMM-MyTado: Zone "${zone.name}" state fetched`);
+                        this.logDebug(`Zone "${zone.name}" state fetched`);
                     } catch (err) {
                         console.error(`MMM-MyTado: Failed fetching zone "${zone.name}"`, err);
                     }
@@ -114,7 +121,7 @@ module.exports = NodeHelper.create({
             this.cacheTimestamp = Date.now();
 
             this.sendSocketNotification("NEW_DATA", data);
-            console.log("MMM-MyTado: Data sent to frontend");
+            this.logDebug("Data sent to frontend");
 
         } catch (err) {
             console.error("MMM-MyTado: Error in getData:", err);
@@ -137,12 +144,13 @@ module.exports = NodeHelper.create({
                 tempColumnName: "TEMP (°C)",
                 humidityColumnName: "",
                 statusColumnName: "STATUS",
-                lastUpdateName: "Last update"
+                lastUpdateName: "Last update",
+                debug: false
             }, payload);
 
             this.showZones = this.config.showZones || [];
 
-            console.log("MMM-MyTado: Config received:", this.config);
+            this.logDebug("Config received:", this.config);
 
             // Immediately fetch data
             this.getData();
