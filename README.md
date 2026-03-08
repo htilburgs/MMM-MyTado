@@ -3,6 +3,8 @@ This a [Magic Mirror²](https://github.com/MichMich/MagicMirror) module for your
 The module is based on the idea from WouterEekhout, but his module is not maintained anymore. </br>
 I like the idea and built a version with a modern look and feel.
 
+<img width="402" height="272" alt="SCR-20260226-ukba" src="https://github.com/user-attachments/assets/d3121022-f48e-4c22-9f9b-e2c04a2189d5" />
+
 ### The module displays the following information:
 
 * The Home name (🏠)
@@ -13,8 +15,6 @@ I like the idea and built a version with a modern look and feel.
 * The hot water temperature (🩸)
 * Frost Protection (❄️)
 * Open Window (🪟)
-
-<img width="402" height="272" alt="SCR-20260226-ukba" src="https://github.com/user-attachments/assets/d3121022-f48e-4c22-9f9b-e2c04a2189d5" />
 
 ## Installation
 Clone this repository in your modules folder, and install dependencies:
